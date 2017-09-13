@@ -13,11 +13,12 @@
 // TODO: Write a base class / prototype for system services and let Shell inherit from it.
 var TSOS;
 (function (TSOS) {
-    var Shell = /** @class */ (function () {
+    var Shell = (function () {
         function Shell() {
             // Properties
             this.promptStr = ">";
             this.commandList = [];
+            this.commandHistory = [];
             this.curses = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
             this.apologies = "[sorry]";
         }
@@ -60,6 +61,7 @@ var TSOS;
         };
         Shell.prototype.handleInput = function (buffer) {
             _Kernel.krnTrace("Shell Command~" + buffer);
+            this.commandHistory[this.commandHistory.length] = buffer;
             //
             // Parse the input...
             //
@@ -85,6 +87,10 @@ var TSOS;
                 }
             }
             if (found) {
+                // Passes "repeat" arg if cmd repeated. Used in some commands
+                if (this.commandWasRepeated() && args.length == 0) {
+                    args = ["repeat"];
+                }
                 this.execute(fn, args);
             }
             else {
@@ -136,6 +142,9 @@ var TSOS;
             }
             return retVal;
         };
+        Shell.prototype.commandWasRepeated = function () {
+            return (this.commandHistory[this.commandHistory.length - 1] == this.commandHistory[this.commandHistory.length - 2]);
+        };
         //
         // Shell Command Functions.  Kinda not part of Shell() class exactly, but
         // called from here, so kept here to avoid violating the law of least astonishment.
@@ -169,7 +178,14 @@ var TSOS;
             }
         };
         Shell.prototype.shellVer = function (args) {
-            _StdOut.putText(APP_NAME + " version " + APP_VERSION);
+            if (args[0] != "repeat") {
+                _StdOut.putText("Just assume it's still in alpha");
+            }
+            else {
+                _StdOut.putText("If you must know...");
+                _StdOut.advanceLine();
+                _StdOut.putText(APP_NAME + " version " + APP_VERSION);
+            }
         };
         Shell.prototype.shellHelp = function (args) {
             _StdOut.putText("Commands:");

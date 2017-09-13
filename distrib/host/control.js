@@ -23,7 +23,7 @@
 //
 var TSOS;
 (function (TSOS) {
-    var Control = /** @class */ (function () {
+    var Control = (function () {
         function Control() {
         }
         Control.hostInit = function () {

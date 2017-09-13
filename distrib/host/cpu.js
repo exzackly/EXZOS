@@ -15,7 +15,7 @@
      ------------ */
 var TSOS;
 (function (TSOS) {
-    var Cpu = /** @class */ (function () {
+    var Cpu = (function () {
         function Cpu(PC, Acc, Xreg, Yreg, Zflag, isExecuting) {
             if (PC === void 0) { PC = 0; }
             if (Acc === void 0) { Acc = 0; }

@@ -13,7 +13,7 @@
      ------------ */
 var TSOS;
 (function (TSOS) {
-    var Kernel = /** @class */ (function () {
+    var Kernel = (function () {
         function Kernel() {
         }
         //

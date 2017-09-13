@@ -18,7 +18,7 @@
  * ----------------- */
 var TSOS;
 (function (TSOS) {
-    var CanvasTextFunctions = /** @class */ (function () {
+    var CanvasTextFunctions = (function () {
         function CanvasTextFunctions() {
         }
         CanvasTextFunctions.letter = function (ch) {

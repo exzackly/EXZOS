@@ -20,6 +20,7 @@ module TSOS {
         // Properties
         public promptStr = ">";
         public commandList = [];
+        public commandHistory = [];
         public curses = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
         public apologies = "[sorry]";
 
@@ -93,6 +94,7 @@ module TSOS {
 
         public handleInput(buffer) {
             _Kernel.krnTrace("Shell Command~" + buffer);
+            this.commandHistory[this.commandHistory.length] = buffer;
             //
             // Parse the input...
             //
@@ -117,6 +119,10 @@ module TSOS {
                 }
             }
             if (found) {
+                // Passes "repeat" arg if cmd repeated. Used in some commands
+				if (this.commandWasRepeated() && args.length == 0) {
+					args = ["repeat"];
+				}
                 this.execute(fn, args);
             } else {
                 // It's not found, so check for curses and apologies before declaring the command invalid.
@@ -173,6 +179,10 @@ module TSOS {
             return retVal;
         }
 
+        public commandWasRepeated(): boolean {
+            return (this.commandHistory[this.commandHistory.length-1] == this.commandHistory[this.commandHistory.length-2]);
+        }
+
         //
         // Shell Command Functions.  Kinda not part of Shell() class exactly, but
         // called from here, so kept here to avoid violating the law of least astonishment.
@@ -207,7 +217,13 @@ module TSOS {
         }
 
         public shellVer(args) {
-            _StdOut.putText(APP_NAME + " version " + APP_VERSION);
+            if (args[0] != "repeat") {
+                _StdOut.putText("Just assume it's still in alpha");
+            } else {
+                _StdOut.putText("If you must know...");
+                _StdOut.advanceLine();
+                _StdOut.putText(APP_NAME + " version " + APP_VERSION);
+            }
         }
 
         public shellHelp(args) {
