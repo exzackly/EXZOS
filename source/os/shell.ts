@@ -80,6 +80,24 @@ module TSOS {
                                   "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
 
+            // date
+            sc = new ShellCommand(this.shellDate,
+                                  "date",
+                                  "- Displays the current date and time");
+            this.commandList[this.commandList.length] = sc;
+
+			// whereami
+            sc = new ShellCommand(this.shellWhereAmI,
+                                  "whereami",
+                                  "- Displays the user's current location");
+            this.commandList[this.commandList.length] = sc;
+
+			// procrastinate
+            sc = new ShellCommand(this.shellProcrastinate,
+                                  "procrastinate",
+                                  "- Execute standard workflow. Persistence is key...");
+            this.commandList[this.commandList.length] = sc;
+
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
 
@@ -296,6 +314,29 @@ module TSOS {
             } else {
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
             }
+        }
+
+        public shellDate(args) {
+			var currentDate = new Date();
+			var dateString = currentDate.getFullYear() + "-" +
+                                ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" +
+                                ("0" + currentDate.getDate()).slice(-2) + " " +
+                                ("0" + currentDate.getHours()).slice(-2) + ":" +
+                                ("0" + currentDate.getMinutes()).slice(-2) + ":" +
+                                ("0" + currentDate.getSeconds()).slice(-2);
+            _StdOut.putText(dateString);
+        }
+
+		public shellWhereAmI(args) {
+            _StdOut.putText("Not far enough");
+        }
+
+		public shellProcrastinate(args, shell) {
+			if (!shell.commandWasRepeated()) {
+				_StdOut.putText("Later");
+			} else {
+				_StdOut.putText("*sigh* I'll do it tomorrow");
+			}
         }
 
     }

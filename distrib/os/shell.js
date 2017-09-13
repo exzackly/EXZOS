@@ -50,6 +50,15 @@ var TSOS;
             // prompt <string>
             sc = new TSOS.ShellCommand(this.shellPrompt, "prompt", "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
+            // date
+            sc = new TSOS.ShellCommand(this.shellDate, "date", "- Displays the current date and time");
+            this.commandList[this.commandList.length] = sc;
+            // whereami
+            sc = new TSOS.ShellCommand(this.shellWhereAmI, "whereami", "- Displays the user's current location");
+            this.commandList[this.commandList.length] = sc;
+            // procrastinate
+            sc = new TSOS.ShellCommand(this.shellProcrastinate, "procrastinate", "- Execute standard workflow. Persistence is key...");
+            this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
             //
@@ -252,6 +261,27 @@ var TSOS;
             }
             else {
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
+            }
+        };
+        Shell.prototype.shellDate = function (args) {
+            var currentDate = new Date();
+            var dateString = currentDate.getFullYear() + "-" +
+                ("0" + (currentDate.getMonth() + 1)).slice(-2) + "-" +
+                ("0" + currentDate.getDate()).slice(-2) + " " +
+                ("0" + currentDate.getHours()).slice(-2) + ":" +
+                ("0" + currentDate.getMinutes()).slice(-2) + ":" +
+                ("0" + currentDate.getSeconds()).slice(-2);
+            _StdOut.putText(dateString);
+        };
+        Shell.prototype.shellWhereAmI = function (args) {
+            _StdOut.putText("Not far enough");
+        };
+        Shell.prototype.shellProcrastinate = function (args, shell) {
+            if (!shell.commandWasRepeated()) {
+                _StdOut.putText("Later");
+            }
+            else {
+                _StdOut.putText("*sigh* I'll do it tomorrow");
             }
         };
         return Shell;
