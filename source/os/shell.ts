@@ -103,27 +103,13 @@ module TSOS {
             var cmd = userCommand.command;
             var args = userCommand.args;
             //
-            // Determine the command and execute it.
+            // Determine the command
             //
-            // TypeScript/JavaScript may not support associative arrays in all browsers so we have to iterate over the
-            // command list in attempt to find a match.  TODO: Is there a better way? Probably. Someone work it out and tell me in class.
-            var index: number = 0;
-            var found: boolean = false;
-            var fn = undefined;
-            while (!found && index < this.commandList.length) {
-                if (this.commandList[index].command === cmd) {
-                    found = true;
-                    fn = this.commandList[index].func;
-                } else {
-                    ++index;
-                }
-            }
-            if (found) {
-                // Passes "repeat" arg if cmd repeated. Used in some commands
-				if (this.commandWasRepeated() && args.length == 0) {
-					args = ["repeat"];
-				}
-                this.execute(fn, args);
+            var fn = this.determineFunction(cmd);
+
+            /// Execute command if found
+            if (fn != "undefined") {
+                this.execute(fn.func, args);
             } else {
                 // It's not found, so check for curses and apologies before declaring the command invalid.
                 if (this.curses.indexOf("[" + Utils.rot13(cmd) + "]") >= 0) {     // Check for curses.
@@ -141,7 +127,7 @@ module TSOS {
             // We just got a command, so advance the line...
             _StdOut.advanceLine();
             // ... call the command function passing in the args with some über-cool functional programming ...
-            fn(args);
+            fn(args, this);
             // Check to see if we need to advance the line again
             if (_StdOut.currentXPosition > 0) {
                 _StdOut.advanceLine();
@@ -183,6 +169,17 @@ module TSOS {
             return (this.commandHistory[this.commandHistory.length-1] == this.commandHistory[this.commandHistory.length-2]);
         }
 
+        public determineFunction(cmd): any {
+            // TypeScript/JavaScript may not support associative arrays in all browsers so we have to iterate over the
+            // command list in attempt to find a match.  TODO: Is there a better way? Probably. Someone work it out and tell me in class.
+            for (var i = 0; i < this.commandList.length; i++) {
+                if (this.commandList[i].command === cmd) {
+                    return this.commandList[i];
+                }
+            }
+            return "undefined";
+        }
+
         //
         // Shell Command Functions.  Kinda not part of Shell() class exactly, but
         // called from here, so kept here to avoid violating the law of least astonishment.
@@ -216,8 +213,8 @@ module TSOS {
            }
         }
 
-        public shellVer(args) {
-            if (args[0] != "repeat") {
+        public shellVer(args, shell) {
+            if (!shell.commandWasRepeated()) {
                 _StdOut.putText("Just assume it's still in alpha");
             } else {
                 _StdOut.putText("If you must know...");
@@ -246,17 +243,15 @@ module TSOS {
             _StdOut.resetXY();
         }
 
-        public shellMan(args) {
+        public shellMan(args, shell) {
             if (args.length > 0) {
-                var topic = args[0];
-                switch (topic) {
-                    case "help":
-                        _StdOut.putText("Help displays a list of (hopefully) valid commands.");
-                        break;
-                    // TODO: Make descriptive MANual page entries for the the rest of the shell commands here.
-                    default:
-                        _StdOut.putText("No manual entry for " + args[0] + ".");
+                var fn = shell.determineFunction(args[0]);
+                var description = fn != "undefined" ? fn.description : "- Command not found";
+                if (args[0] == "help") {
+                    _StdOut.putText("Help displays a list of all available commands.");
+                    _StdOut.advanceLine();
                 }
+                _StdOut.putText(args[0] + " " + description);
             } else {
                 _StdOut.putText("Usage: man <topic>  Please supply a topic.");
             }
