@@ -59,6 +59,9 @@ var TSOS;
             // procrastinate
             sc = new TSOS.ShellCommand(this.shellProcrastinate, "procrastinate", "- Execute standard workflow. Persistence is key...");
             this.commandList[this.commandList.length] = sc;
+            // status <string>
+            sc = new TSOS.ShellCommand(this.shellStatus, "status", "<string> - Sets the status in the taskbar.");
+            this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
             //
@@ -282,6 +285,14 @@ var TSOS;
             }
             else {
                 _StdOut.putText("*sigh* I'll do it tomorrow");
+            }
+        };
+        Shell.prototype.shellStatus = function (args) {
+            if (args.length > 0) {
+                TSOS.Control.hostSetStatus(args.join(" "));
+            }
+            else {
+                _StdOut.putText("Usage: status <string>  Please supply a string.");
             }
         };
         return Shell;

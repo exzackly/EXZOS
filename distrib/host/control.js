@@ -62,6 +62,20 @@ var TSOS;
             taLog.value = str + taLog.value;
             // TODO in the future: Optionally update a log database or some streaming service.
         };
+        Control.hostUpdateDisplayDate = function () {
+            // Update date in taskbarDate
+            var currentDate = new Date();
+            var dateString = String(currentDate.getFullYear()).slice(-2) + "-" +
+                ("0" + (currentDate.getMonth() + 1)).slice(-2) + "-" +
+                ("0" + currentDate.getDate()).slice(-2) + " " +
+                ("0" + currentDate.getHours()).slice(-2) + ":" +
+                ("0" + currentDate.getMinutes()).slice(-2) + ":" +
+                ("0" + currentDate.getSeconds()).slice(-2);
+            document.getElementById("taskbarDate").innerHTML = dateString;
+        };
+        Control.hostSetStatus = function (msg) {
+            document.getElementById("taskbarStatus").innerHTML = "Status : " + msg;
+        };
         //
         // Host Events
         //

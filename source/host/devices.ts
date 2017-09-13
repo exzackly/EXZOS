@@ -31,6 +31,9 @@ module TSOS {
         // Hardware/Host Clock Pulse
         //
         public static hostClockPulse(): void {
+            if (_OSclock % 10 == 0) { // Approx. once per second, update date in taskbarDate
+                Control.hostUpdateDisplayDate();
+			}
             // Increment the hardware (host) clock.
             _OSclock++;
             // Call the kernel clock pulse event handler.

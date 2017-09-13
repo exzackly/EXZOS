@@ -74,6 +74,21 @@ module TSOS {
             // TODO in the future: Optionally update a log database or some streaming service.
         }
 
+        public static hostUpdateDisplayDate(): void {
+            // Update date in taskbarDate
+            var currentDate = new Date();
+            var dateString = String(currentDate.getFullYear()).slice(-2) + "-" +
+                ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" +
+                ("0" + currentDate.getDate()).slice(-2) + " " +
+                ("0" + currentDate.getHours()).slice(-2) + ":" +
+                ("0" + currentDate.getMinutes()).slice(-2) + ":" +
+                ("0" + currentDate.getSeconds()).slice(-2);
+            document.getElementById("taskbarDate").innerHTML=dateString;
+        }
+
+        public static hostSetStatus(msg: string): void {
+            document.getElementById("taskbarStatus").innerHTML = "Status : " + msg;
+        }
 
         //
         // Host Events

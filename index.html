@@ -65,6 +65,13 @@
              value="Reset"
              tabindex="2"
              onclick="TSOS.Control.hostBtnReset_click(this);">
+
+       	<!-- used as a spacer for formatting -->
+		<input type="button"
+             name="spacer"
+			 style="opacity:0; width:200px;">
+
+		<label id="taskbarDate"></label>
    </div>
 
    <div id="divConsole" style="margin:4px; width:500px; height:500px; float:left;">
@@ -75,13 +82,18 @@
       </canvas>
    </div>
 
+   <div id="divTaskbar" style="margin-left:520px;">
+      <label id="taskbarStatus">Status : Nightmares only happen if you sleep</label>
+	  <br><br>
+   </div>
+
    <div id="divLog" style="margin-left:520px;">
       <label>
          Host Log
          <br>
          <textarea name="taHostLog"
                    id  ="taHostLog"
-                   rows="26"
+                   rows="23"
                    cols="48"
          ></textarea>
       </label>
