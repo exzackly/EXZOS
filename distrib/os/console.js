@@ -79,10 +79,25 @@ var TSOS;
              * Font descent measures from the baseline to the lowest point in the font.
              * Font height margin is extra spacing between the lines.
              */
-            this.currentYPosition += _DefaultFontSize +
+            this.currentYPosition += this.consoleLineHeight();
+            // Scroll if cursor at bottom of screen
+            if (this.currentYPosition >= _Canvas.height) {
+                var scrollYBy = (this.currentYPosition - _Canvas.height) + _FontHeightMargin;
+                var screenshot = _DrawingContext.getImageData(0, 0, _Canvas.width, _Canvas.height);
+                this.clearScreen();
+                this.currentYPosition -= scrollYBy;
+                _DrawingContext.putImageData(screenshot, 0, -scrollYBy);
+            }
+        };
+        Console.prototype.consoleLineHeight = function () {
+            /*
+             * Font size measures from the baseline to the highest point in the font.
+             * Font descent measures from the baseline to the lowest point in the font.
+             * Font height margin is extra spacing between the lines.
+             */
+            return _DefaultFontSize +
                 _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
                 _FontHeightMargin;
-            // TODO: Handle scrolling. (iProject 1)
         };
         return Console;
     }());
