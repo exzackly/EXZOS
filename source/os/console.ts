@@ -39,7 +39,19 @@ module TSOS {
                 // Get the next character from the kernel input queue.
                 var chr = _KernelInputQueue.dequeue();
                 // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
-                if (chr === String.fromCharCode(13)) { //     Enter key
+
+                if (chr === String.fromCharCode(8)) { //     Backspace key
+                    var lastChr = this.buffer.slice(-1); // Get last character in buffer (character to backspace)
+                    // Calculate width, height, and font descent to clear
+                    var backspaceWidth = _DrawingContext.measureText(this.currentFont, this.currentFontSize, lastChr);
+                    var backspaceHeight = this.consoleLineHeight();
+                    //var fontDescent = _DrawingContext.fontDescent(this.currentFont, this.currentFontSize);
+                    this.currentXPosition -= backspaceWidth; // Move cursor position
+                    // Clear rect with character to delete
+                    _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - backspaceHeight + _FontHeightMargin, backspaceWidth, backspaceHeight);
+                    // Remove character from buffer
+                    this.buffer = this.buffer.slice(0, -1);
+                } else if (chr === String.fromCharCode(13)) { //     Enter key
                     // The enter key marks the end of a console command, so ...
                     // ... tell the shell ...
                     _OsShell.handleInput(this.buffer);
@@ -76,13 +88,7 @@ module TSOS {
 
         public advanceLine(): void {
             this.currentXPosition = 0;
-            /*
-             * Font size measures from the baseline to the highest point in the font.
-             * Font descent measures from the baseline to the lowest point in the font.
-             * Font height margin is extra spacing between the lines.
-             */
             this.currentYPosition += this.consoleLineHeight();
-
             // Scroll if cursor at bottom of screen
 			if (this.currentYPosition >= _Canvas.height) {
 				var scrollYBy = (this.currentYPosition-_Canvas.height)+_FontHeightMargin;
