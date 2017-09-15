@@ -110,6 +110,15 @@ var TSOS;
             else if (keyCode in this.keyCodeMap || keyCode in this.shiftedKeyCodeMap) {
                 chr = this.mapKeyPress(keyCode, isShifted);
             }
+            else if (keyCode == 38) {
+                chr = "&uarr;";
+            }
+            else if (keyCode == 40) {
+                chr = "&darr;";
+            }
+            else if (keyCode == 9) {
+                chr = "&tab;";
+            }
             else if (keyCode == 20) {
                 this.isCapsLock = !this.isCapsLock;
             }

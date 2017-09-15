@@ -18,7 +18,6 @@ var TSOS;
             // Properties
             this.promptStr = ">";
             this.commandList = [];
-            this.commandHistory = [];
             this.curses = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
             this.apologies = "[sorry]";
         }
@@ -27,7 +26,7 @@ var TSOS;
             //
             // Load the command list.
             // ver
-            sc = new TSOS.ShellCommand(this.shellVer, "ver", "- Displays the current version data.");
+            sc = new TSOS.ShellCommand(this.shellVer, "ver", "- Displays the current version data. Persistence is key");
             this.commandList[this.commandList.length] = sc;
             // help
             sc = new TSOS.ShellCommand(this.shellHelp, "help", "- This is the help command. Seek help.");
@@ -73,7 +72,6 @@ var TSOS;
         };
         Shell.prototype.handleInput = function (buffer) {
             _Kernel.krnTrace("Shell Command~" + buffer);
-            this.commandHistory[this.commandHistory.length] = buffer;
             //
             // Parse the input...
             //
@@ -107,7 +105,7 @@ var TSOS;
             // We just got a command, so advance the line...
             _StdOut.advanceLine();
             // ... call the command function passing in the args with some über-cool functional programming ...
-            fn(args, this);
+            fn(args);
             // Check to see if we need to advance the line again
             if (_StdOut.currentXPosition > 0) {
                 _StdOut.advanceLine();
@@ -139,7 +137,7 @@ var TSOS;
             return retVal;
         };
         Shell.prototype.commandWasRepeated = function () {
-            return (this.commandHistory[this.commandHistory.length - 1] == this.commandHistory[this.commandHistory.length - 2]);
+            return (_Console.commandHistory[_Console.commandHistory.length - 1] == _Console.commandHistory[_Console.commandHistory.length - 2]);
         };
         Shell.prototype.determineFunction = function (cmd) {
             // TypeScript/JavaScript may not support associative arrays in all browsers so we have to iterate over the
@@ -183,8 +181,8 @@ var TSOS;
                 _StdOut.putText("For what?");
             }
         };
-        Shell.prototype.shellVer = function (args, shell) {
-            if (!shell.commandWasRepeated()) {
+        Shell.prototype.shellVer = function (args) {
+            if (!_OsShell.commandWasRepeated()) {
                 _StdOut.putText("Just assume it's still in alpha");
             }
             else {
@@ -210,9 +208,9 @@ var TSOS;
             _StdOut.clearScreen();
             _StdOut.resetXY();
         };
-        Shell.prototype.shellMan = function (args, shell) {
+        Shell.prototype.shellMan = function (args) {
             if (args.length > 0) {
-                var fn = shell.determineFunction(args[0]);
+                var fn = _OsShell.determineFunction(args[0]);
                 var description = fn != "undefined" ? fn.description : "- Command not found";
                 if (args[0] == "help") {
                     _StdOut.putText("Help displays a list of all available commands.");
@@ -279,8 +277,8 @@ var TSOS;
         Shell.prototype.shellWhereAmI = function (args) {
             _StdOut.putText("Not far enough");
         };
-        Shell.prototype.shellProcrastinate = function (args, shell) {
-            if (!shell.commandWasRepeated()) {
+        Shell.prototype.shellProcrastinate = function (args) {
+            if (!_OsShell.commandWasRepeated()) {
                 _StdOut.putText("Later");
             }
             else {

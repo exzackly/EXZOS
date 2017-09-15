@@ -10,16 +10,20 @@
 var TSOS;
 (function (TSOS) {
     var Console = (function () {
-        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, buffer) {
+        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, commandHistoryIndex, commandHistory, buffer) {
             if (currentFont === void 0) { currentFont = _DefaultFontFamily; }
             if (currentFontSize === void 0) { currentFontSize = _DefaultFontSize; }
             if (currentXPosition === void 0) { currentXPosition = 0; }
             if (currentYPosition === void 0) { currentYPosition = _DefaultFontSize; }
+            if (commandHistoryIndex === void 0) { commandHistoryIndex = 0; }
+            if (commandHistory === void 0) { commandHistory = []; }
             if (buffer === void 0) { buffer = ""; }
             this.currentFont = currentFont;
             this.currentFontSize = currentFontSize;
             this.currentXPosition = currentXPosition;
             this.currentYPosition = currentYPosition;
+            this.commandHistoryIndex = commandHistoryIndex;
+            this.commandHistory = commandHistory;
             this.buffer = buffer;
         }
         Console.prototype.init = function () {
@@ -38,20 +42,26 @@ var TSOS;
                 // Get the next character from the kernel input queue.
                 var chr = _KernelInputQueue.dequeue();
                 // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
-                if (chr === String.fromCharCode(8)) {
-                    var lastChr = this.buffer.slice(-1); // Get last character in buffer (character to backspace)
-                    // Calculate width, height, and font descent to clear
-                    var backspaceWidth = _DrawingContext.measureText(this.currentFont, this.currentFontSize, lastChr);
-                    var backspaceHeight = this.consoleLineHeight();
-                    //var fontDescent = _DrawingContext.fontDescent(this.currentFont, this.currentFontSize);
-                    this.currentXPosition -= backspaceWidth; // Move cursor position
-                    // Clear rect with character to delete
-                    _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - backspaceHeight + _FontHeightMargin, backspaceWidth, backspaceHeight);
-                    // Remove character from buffer
-                    this.buffer = this.buffer.slice(0, -1);
+                if (chr === "&uarr;" || chr === "&darr;") {
+                    this.putCommandHistory(chr);
+                }
+                else if (chr === "&tab;") {
+                    this.tabCompleteCommand(this.buffer);
+                }
+                else if (chr === String.fromCharCode(8)) {
+                    this.backspaceCharacter();
                 }
                 else if (chr === String.fromCharCode(13)) {
                     // The enter key marks the end of a console command, so ...
+                    // ... check if buffer has input ...
+                    if (this.buffer.length == 0) {
+                        this.advanceLine();
+                        _OsShell.putPrompt();
+                        return;
+                    }
+                    // ... store the command in the commandHistory and adjust commandHistory Index ...
+                    this.commandHistory[this.commandHistory.length] = this.buffer;
+                    this.commandHistoryIndex = this.commandHistory.length;
                     // ... tell the shell ...
                     _OsShell.handleInput(this.buffer);
                     // ... and reset our buffer.
@@ -66,6 +76,60 @@ var TSOS;
                 }
                 // TODO: Write a case for Ctrl-C.
             }
+        };
+        Console.prototype.putCommandHistory = function (chr) {
+            if (chr === "&uarr;" && this.commandHistoryIndex > 0) {
+                this.commandHistoryIndex -= 1;
+            }
+            else if (chr == "&darr;" && this.commandHistoryIndex < this.commandHistory.length - 1) {
+                this.commandHistoryIndex += 1;
+            }
+            else {
+                return;
+            } // past bounds; return before erasing screen
+            this.clearLine();
+            this.buffer = this.commandHistory[this.commandHistoryIndex];
+            this.putText(this.buffer);
+        };
+        Console.prototype.tabCompleteCommand = function (prefix) {
+            if (prefix.length === 0) {
+                return;
+            } // Do not autocomplete if buffer empty
+            var commandsWithPrefix = _OsShell.commandList.filter(function (cmd) {
+                return cmd.command.startsWith(prefix); // return true is cmd(ShellCommand obj)'s command has prefix
+            });
+            if (commandsWithPrefix.length == 1) {
+                var cmd = commandsWithPrefix[0].command;
+                this.clearLine();
+                this.putText(cmd);
+                this.buffer = cmd;
+            }
+            else if (commandsWithPrefix.length > 1) {
+                // Grab corresponding command names, and join with a space
+                var commandNames = commandsWithPrefix.map(function (cmd) { return cmd.command; }).join(" ");
+                // Display all possible commands with prefix
+                this.advanceLine();
+                this.putText(commandNames);
+                this.advanceLine();
+                // Prepare for next input; restore buffer
+                _OsShell.putPrompt();
+                this.putText(this.buffer);
+            }
+        };
+        Console.prototype.backspaceCharacter = function () {
+            var lastChr = this.buffer.slice(-1); // Get last character in buffer (character to backspace)
+            // Calculate width to clear
+            var backspaceWidth = _DrawingContext.measureText(this.currentFont, this.currentFontSize, lastChr);
+            this.currentXPosition -= backspaceWidth; // Move cursor position
+            // Clear rect with character to delete
+            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, backspaceWidth, this.consoleLineHeight());
+            // Remove character from buffer
+            this.buffer = this.buffer.slice(0, -1);
+        };
+        Console.prototype.clearLine = function () {
+            this.currentXPosition = 0;
+            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, this.consoleLineHeight());
+            _StdOut.putText(_OsShell.promptStr);
         };
         Console.prototype.putText = function (text) {
             // My first inclination here was to write two functions: putChar() and putString().

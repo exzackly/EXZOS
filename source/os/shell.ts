@@ -20,7 +20,6 @@ module TSOS {
         // Properties
         public promptStr = ">";
         public commandList = [];
-        public commandHistory = [];
         public curses = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
         public apologies = "[sorry]";
 
@@ -35,7 +34,7 @@ module TSOS {
             // ver
             sc = new ShellCommand(this.shellVer,
                                   "ver",
-                                  "- Displays the current version data.");
+                                  "- Displays the current version data. Persistence is key");
             this.commandList[this.commandList.length] = sc;
 
             // help
@@ -118,7 +117,6 @@ module TSOS {
 
         public handleInput(buffer) {
             _Kernel.krnTrace("Shell Command~" + buffer);
-            this.commandHistory[this.commandHistory.length] = buffer;
             //
             // Parse the input...
             //
@@ -130,7 +128,6 @@ module TSOS {
             // Determine the command
             //
             var fn = this.determineFunction(cmd);
-
             /// Execute command if found
             if (fn != "undefined") {
                 this.execute(fn.func, args);
@@ -151,7 +148,7 @@ module TSOS {
             // We just got a command, so advance the line...
             _StdOut.advanceLine();
             // ... call the command function passing in the args with some über-cool functional programming ...
-            fn(args, this);
+            fn(args);
             // Check to see if we need to advance the line again
             if (_StdOut.currentXPosition > 0) {
                 _StdOut.advanceLine();
@@ -190,7 +187,7 @@ module TSOS {
         }
 
         public commandWasRepeated(): boolean {
-            return (this.commandHistory[this.commandHistory.length-1] == this.commandHistory[this.commandHistory.length-2]);
+            return (_Console.commandHistory[_Console.commandHistory.length-1] == _Console.commandHistory[_Console.commandHistory.length-2]);
         }
 
         public determineFunction(cmd): any {
@@ -237,8 +234,8 @@ module TSOS {
            }
         }
 
-        public shellVer(args, shell) {
-            if (!shell.commandWasRepeated()) {
+        public shellVer(args) {
+            if (!_OsShell.commandWasRepeated()) {
                 _StdOut.putText("Just assume it's still in alpha");
             } else {
                 _StdOut.putText("If you must know...");
@@ -267,9 +264,9 @@ module TSOS {
             _StdOut.resetXY();
         }
 
-        public shellMan(args, shell) {
+        public shellMan(args) {
             if (args.length > 0) {
-                var fn = shell.determineFunction(args[0]);
+                var fn = _OsShell.determineFunction(args[0]);
                 var description = fn != "undefined" ? fn.description : "- Command not found";
                 if (args[0] == "help") {
                     _StdOut.putText("Help displays a list of all available commands.");
@@ -337,8 +334,8 @@ module TSOS {
             _StdOut.putText("Not far enough");
         }
 
-		public shellProcrastinate(args, shell) {
-			if (!shell.commandWasRepeated()) {
+		public shellProcrastinate(args) {
+			if (!_OsShell.commandWasRepeated()) {
 				_StdOut.putText("Later");
 			} else {
 				_StdOut.putText("*sigh* I'll do it tomorrow");

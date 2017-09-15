@@ -17,6 +17,8 @@ module TSOS {
                     public currentFontSize = _DefaultFontSize,
                     public currentXPosition = 0,
                     public currentYPosition = _DefaultFontSize,
+                    public commandHistoryIndex = 0,
+                    public commandHistory = [],
                     public buffer = "") {
         }
 
@@ -39,20 +41,23 @@ module TSOS {
                 // Get the next character from the kernel input queue.
                 var chr = _KernelInputQueue.dequeue();
                 // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
-
-                if (chr === String.fromCharCode(8)) { //     Backspace key
-                    var lastChr = this.buffer.slice(-1); // Get last character in buffer (character to backspace)
-                    // Calculate width, height, and font descent to clear
-                    var backspaceWidth = _DrawingContext.measureText(this.currentFont, this.currentFontSize, lastChr);
-                    var backspaceHeight = this.consoleLineHeight();
-                    //var fontDescent = _DrawingContext.fontDescent(this.currentFont, this.currentFontSize);
-                    this.currentXPosition -= backspaceWidth; // Move cursor position
-                    // Clear rect with character to delete
-                    _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - backspaceHeight + _FontHeightMargin, backspaceWidth, backspaceHeight);
-                    // Remove character from buffer
-                    this.buffer = this.buffer.slice(0, -1);
+                if (chr === "&uarr;" || chr === "&darr;") { // up arrow or down arrow pressed
+                   this.putCommandHistory(chr);
+                } else if (chr === "&tab;") { // tab
+                    this.tabCompleteCommand(this.buffer);
+                } else if (chr === String.fromCharCode(8)) { //     Backspace key
+                    this.backspaceCharacter();
                 } else if (chr === String.fromCharCode(13)) { //     Enter key
                     // The enter key marks the end of a console command, so ...
+                    // ... check if buffer has input ...
+                    if (this.buffer.length == 0) { // buffer is empty; advance line and do not process command
+                        this.advanceLine();
+                        _OsShell.putPrompt();
+                        return;
+                    }
+                    // ... store the command in the commandHistory and adjust commandHistory Index ...
+                    this.commandHistory[this.commandHistory.length] = this.buffer;
+                    this.commandHistoryIndex = this.commandHistory.length;
                     // ... tell the shell ...
                     _OsShell.handleInput(this.buffer);
                     // ... and reset our buffer.
@@ -66,6 +71,57 @@ module TSOS {
                 }
                 // TODO: Write a case for Ctrl-C.
             }
+        }
+
+        public putCommandHistory(chr): void {
+             if (chr === "&uarr;" && this.commandHistoryIndex > 0) { // check that command history has previous command
+                this.commandHistoryIndex -= 1;
+            } else if (chr == "&darr;" && this.commandHistoryIndex < this.commandHistory.length-1) { // check that do not pass last command entered
+                this.commandHistoryIndex += 1;
+            } else { return; } // past bounds; return before erasing screen
+            this.clearLine();
+            this.buffer = this.commandHistory[this.commandHistoryIndex];
+            this.putText(this.buffer);
+        }
+
+        public tabCompleteCommand(prefix): void {
+            if (prefix.length === 0) { return; } // Do not autocomplete if buffer empty
+            var commandsWithPrefix  = _OsShell.commandList.filter(function(cmd){
+                 return cmd.command.startsWith(prefix); // return true is cmd(ShellCommand obj)'s command has prefix
+            });
+            if (commandsWithPrefix.length == 1) { // Only 1 possible command with prefix; autocomplete
+                var cmd = commandsWithPrefix[0].command;
+                this.clearLine();
+                this.putText(cmd);
+                this.buffer = cmd;
+            } else if (commandsWithPrefix.length > 1) { // Multiple possible commands with prefix; display all
+                // Grab corresponding command names, and join with a space
+                var commandNames = commandsWithPrefix.map(function(cmd){ return cmd.command; }).join(" ");
+                // Display all possible commands with prefix
+                this.advanceLine();
+                this.putText(commandNames);
+                this.advanceLine();
+                // Prepare for next input; restore buffer
+                _OsShell.putPrompt();
+                this.putText(this.buffer);
+            }
+        }
+
+        public backspaceCharacter(): void {
+            var lastChr = this.buffer.slice(-1); // Get last character in buffer (character to backspace)
+            // Calculate width to clear
+            var backspaceWidth = _DrawingContext.measureText(this.currentFont, this.currentFontSize, lastChr);
+            this.currentXPosition -= backspaceWidth; // Move cursor position
+            // Clear rect with character to delete
+            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, backspaceWidth, this.consoleLineHeight());
+            // Remove character from buffer
+            this.buffer = this.buffer.slice(0, -1);
+        }
+
+        public clearLine(): void {
+            this.currentXPosition = 0;
+            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, this.consoleLineHeight());
+            _StdOut.putText(_OsShell.promptStr);
         }
 
         public putText(text): void {

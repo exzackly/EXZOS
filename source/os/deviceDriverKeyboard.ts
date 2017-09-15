@@ -50,6 +50,12 @@ module TSOS {
                 chr = String.fromCharCode(keyCode);
             } else if (keyCode in this.keyCodeMap || keyCode in this.shiftedKeyCodeMap) {
                 chr = this.mapKeyPress(keyCode, isShifted);
+            } else if (keyCode == 38) { // up arrow
+                chr = "&uarr;";
+            } else if (keyCode == 40) { // down arrow
+                chr = "&darr;";
+            } else if (keyCode == 9) { // tab
+                chr = "&tab;";
             } else if (keyCode == 20) { // caps lock pressed
                 this.isCapsLock = !this.isCapsLock;
             }
