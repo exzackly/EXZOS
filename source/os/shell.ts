@@ -103,6 +103,18 @@ module TSOS {
                                   "<string> - Sets the status in the taskbar.");
             this.commandList[this.commandList.length] = sc;
 
+            // erupt
+            sc = new ShellCommand(this.shellErupt,
+                                  "erupt",
+                                  "- Pompeii");
+            this.commandList[this.commandList.length] = sc;
+
+            // load
+            sc = new ShellCommand(this.shellLoad,
+                                  "load",
+                                  "- Loads program from User Program Input");
+            this.commandList[this.commandList.length] = sc;
+
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
 
@@ -347,6 +359,20 @@ module TSOS {
                 Control.hostSetStatus(args.join(" "));
             } else {
                 _StdOut.putText("Usage: status <string>  Please supply a string.");
+            }
+        }
+
+        public shellErupt(args) {
+            _StdOut.putText("User initiated EXZOS shutdown");
+            _Kernel.krnTrapError("User initiated OS error");
+        }
+
+        public shellLoad(args) {
+            var isLoaded = Control.hostLoad(); // Have Control verify and load program
+            if (isLoaded) {
+               _StdOut.putText("Program loaded");
+            } else {
+                _StdOut.putText("Invalid program. Only valid characters are 0-9, a-z, and A-z");
             }
         }
 

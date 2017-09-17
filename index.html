@@ -37,6 +37,9 @@
 
 <body onload="onDocumentLoad()">
 
+<img id="volcano" src="distrib/images/volcano.png" style="position:absolute; margin-left:550px; z-index:-1; height:550px; width:300px;">
+<img id="errorMessage" src="distrib/images/error-message.png" style="position:absolute; margin-left:200px; margin-top:450px; z-index:999; display: none;">
+
 <div id="divMain" style="width:100%;">
 
    <div id="divButtonBar" style="margin:4px;">
@@ -87,7 +90,7 @@
 	  <br><br>
    </div>
 
-   <div id="divLog" style="margin-left:520px;">
+   <div id="divLog" style="margin-left:520px; opacity: 0.9;">
       <label>
          Host Log
          <br>
@@ -99,7 +102,7 @@
       </label>
    </div>
 
-   <div id="divUserProgramInput" style="margin-left:520px;">
+   <div id="divUserProgramInput" style="margin-left:520px; opacity: 0.9;">
       <label>
          User Program Input
          <br>

@@ -90,6 +90,24 @@ module TSOS {
             document.getElementById("taskbarStatus").innerHTML = "Status : " + msg;
         }
 
+        public static hostDisplayBSOD(): void {
+            var volcanoImg = (<HTMLImageElement>document.getElementById("volcano"));
+            // Change background volcano image to erupting variant, then move to front
+            volcanoImg.src = "distrib/images/volcano-erupt.png";
+            volcanoImg.style.zIndex = "999";
+            // Unhide error message
+            (<HTMLImageElement>document.getElementById("errorMessage")).style.display = "inline";
+        }
+
+        public static hostLoad(): boolean {
+            // Grab text from taProgramInput
+            var program = (<HTMLInputElement> document.getElementById("taProgramInput")).value;
+            if (program.length == 0) { return false; } // taProgramInput is empty; nothing to load
+            var re = new RegExp("[^ 0-9a-fA-F]"); // Match any non-hex or space character
+            var invalidCharactersFound = re.test(program); // Test program for invalid characters
+            return !invalidCharactersFound; // Return true for valid program; return flipped invalidCharactersFound boolean
+        }
+
         //
         // Host Events
         //

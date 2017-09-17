@@ -61,6 +61,12 @@ var TSOS;
             // status <string>
             sc = new TSOS.ShellCommand(this.shellStatus, "status", "<string> - Sets the status in the taskbar.");
             this.commandList[this.commandList.length] = sc;
+            // erupt
+            sc = new TSOS.ShellCommand(this.shellErupt, "erupt", "- Pompeii");
+            this.commandList[this.commandList.length] = sc;
+            // load
+            sc = new TSOS.ShellCommand(this.shellLoad, "load", "- Loads program from User Program Input");
+            this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
             //
@@ -291,6 +297,19 @@ var TSOS;
             }
             else {
                 _StdOut.putText("Usage: status <string>  Please supply a string.");
+            }
+        };
+        Shell.prototype.shellErupt = function (args) {
+            _StdOut.putText("User initiated EXZOS shutdown");
+            _Kernel.krnTrapError("User initiated OS error");
+        };
+        Shell.prototype.shellLoad = function (args) {
+            var isLoaded = TSOS.Control.hostLoad(); // Have Control verify and load program
+            if (isLoaded) {
+                _StdOut.putText("Program loaded");
+            }
+            else {
+                _StdOut.putText("Invalid program. Only valid characters are 0-9, a-z, and A-z");
             }
         };
         return Shell;
