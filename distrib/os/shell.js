@@ -26,7 +26,7 @@ var TSOS;
             //
             // Load the command list.
             // ver
-            sc = new TSOS.ShellCommand(this.shellVer, "ver", "- Displays the current version data. Persistence is key");
+            sc = new TSOS.ShellCommand(this.shellVer, "ver", "- Displays the current version data. Persistence is key...");
             this.commandList[this.commandList.length] = sc;
             // help
             sc = new TSOS.ShellCommand(this.shellHelp, "help", "- This is the help command. Seek help.");
@@ -123,17 +123,17 @@ var TSOS;
             var retVal = new TSOS.UserCommand();
             // 1. Remove leading and trailing spaces.
             buffer = TSOS.Utils.trim(buffer);
-            // 2. Lower-case it.
-            buffer = buffer.toLowerCase();
-            // 3. Separate on spaces so we can determine the command and command-line args, if any.
+            // 2. Separate on spaces so we can determine the command and command-line args, if any.
             var tempList = buffer.split(" ");
-            // 4. Take the first (zeroth) element and use that as the command.
+            // 3. Take the first (zeroth) element and use that as the command.
             var cmd = tempList.shift(); // Yes, you can do that to an array in JavaScript.  See the Queue class.
-            // 4.1 Remove any left-over spaces.
+            // 3.1 Lower-case it.
+            cmd = cmd.toLowerCase();
+            // 3.2 Remove any left-over spaces.
             cmd = TSOS.Utils.trim(cmd);
-            // 4.2 Record it in the return value.
+            // 3.3 Record it in the return value.
             retVal.command = cmd;
-            // 5. Now create the args array from what's left.
+            // 4. Now create the args array from what's left.
             for (var i in tempList) {
                 var arg = TSOS.Utils.trim(tempList[i]);
                 if (arg != "") {
@@ -309,7 +309,7 @@ var TSOS;
                 _StdOut.putText("Program loaded");
             }
             else {
-                _StdOut.putText("Invalid program. Only valid characters are 0-9, a-z, and A-z");
+                _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z");
             }
         };
         return Shell;

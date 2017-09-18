@@ -123,13 +123,37 @@ var TSOS;
             this.currentXPosition -= backspaceWidth; // Move cursor position
             // Clear rect with character to delete
             _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, backspaceWidth, this.consoleLineHeight());
-            // Remove character from buffer
-            this.buffer = this.buffer.slice(0, -1);
+            this.buffer = this.buffer.slice(0, -1); // Remove character from buffer
+            // Check if last character from line deleted, and snap back to last line if needed
+            if (this.currentXPosition <= 0) {
+                this.currentYPosition -= this.consoleLineHeight();
+                // xPosition is used to compute where to place the cursor on the previous line
+                var xPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + this.buffer);
+                xPosition = xPosition % _Canvas.width; // If there are multiple lines worth of text in the buffer, calculate the width of the last line
+                this.currentXPosition = xPosition;
+            }
         };
         Console.prototype.clearLine = function () {
             this.currentXPosition = 0;
             _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, this.consoleLineHeight());
             _StdOut.putText(_OsShell.promptStr);
+        };
+        Console.prototype.lineWrappedText = function (text) {
+            var availableWidth = _Canvas.width - this.currentXPosition; // Calculate remaining space on the current line
+            var buffer = "";
+            var lineWrappedText = [];
+            while (text.length > 0) {
+                // Add character by character to buffer while width of buffer is smaller than the available width of canvas
+                while (text.length > 0 &&
+                    _DrawingContext.measureText(this.currentFont, this.currentFontSize, (buffer + text.charAt(0))) <= availableWidth) {
+                    buffer += text.charAt(0);
+                    text = text.slice(1);
+                }
+                lineWrappedText.push(buffer);
+                buffer = "";
+                availableWidth = _Canvas.width; // Subsequent lines have full-width of screen
+            }
+            return lineWrappedText;
         };
         Console.prototype.putText = function (text) {
             // My first inclination here was to write two functions: putChar() and putString().
@@ -141,11 +165,18 @@ var TSOS;
             // UPDATE: Even though we are now working in TypeScript, char and string remain undistinguished.
             //         Consider fixing that.
             if (text !== "") {
-                // Draw the text at the current X and Y coordinates.
-                _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
-                // Move the current X position.
-                var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
-                this.currentXPosition = this.currentXPosition + offset;
+                var lineWrappedText = this.lineWrappedText(text);
+                for (var i = 0; i < lineWrappedText.length; i++) {
+                    var line = lineWrappedText[i];
+                    // Draw the text at the current X and Y coordinates.
+                    _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, line);
+                    // Move the current X position.
+                    var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, line);
+                    this.currentXPosition = this.currentXPosition + offset;
+                    if (i + 1 < lineWrappedText.length) {
+                        this.advanceLine();
+                    }
+                }
             }
         };
         Console.prototype.advanceLine = function () {
