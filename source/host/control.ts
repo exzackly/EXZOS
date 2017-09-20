@@ -74,16 +74,22 @@ module TSOS {
             // TODO in the future: Optionally update a log database or some streaming service.
         }
 
-        public static hostUpdateDisplayDate(): void {
-            // Update date in taskbarDate
+        public static hostGetCurrentDate(): string {
             var currentDate = new Date();
-            var dateString = String(currentDate.getFullYear()).slice(-2) + "-" +
+            // JavaScript doesn't have any good date format options; the 0 & slice parts are to ensure uniform padding
+            var dateString = currentDate.getFullYear() + "-" +
                 ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" +
                 ("0" + currentDate.getDate()).slice(-2) + " " +
                 ("0" + currentDate.getHours()).slice(-2) + ":" +
                 ("0" + currentDate.getMinutes()).slice(-2) + ":" +
                 ("0" + currentDate.getSeconds()).slice(-2);
-            document.getElementById("taskbarDate").innerHTML=dateString;
+            return dateString;
+        }
+
+        public static hostUpdateDisplayDate(): void {
+            // Update date in taskbarDate
+            var currentDateString = Control.hostGetCurrentDate();
+            document.getElementById("taskbarDate").innerHTML=currentDateString;
         }
 
         public static hostSetStatus(msg: string): void {

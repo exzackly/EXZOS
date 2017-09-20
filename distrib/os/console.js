@@ -87,7 +87,7 @@ var TSOS;
             else {
                 return;
             } // past bounds; return before erasing screen
-            this.clearLine();
+            this.clearBuffer();
             this.buffer = this.commandHistory[this.commandHistoryIndex];
             this.putText(this.buffer);
         };
@@ -100,7 +100,7 @@ var TSOS;
             });
             if (commandsWithPrefix.length == 1) {
                 var cmd = commandsWithPrefix[0].command;
-                this.clearLine();
+                this.clearBuffer();
                 this.putText(cmd);
                 this.buffer = cmd;
             }
@@ -133,9 +133,15 @@ var TSOS;
                 this.currentXPosition = xPosition;
             }
         };
-        Console.prototype.clearLine = function () {
+        Console.prototype.clearBuffer = function () {
             this.currentXPosition = 0;
-            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, this.consoleLineHeight());
+            // Determine if buffer has line wrapped; clear all lines and adjust currentYPosition if needed
+            var bufferSize = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + this.buffer);
+            var lineCount = Math.ceil(bufferSize / _Canvas.width);
+            if (lineCount > 1) {
+                this.currentYPosition -= (lineCount - 1) * this.consoleLineHeight(); // Subtract 1 because you want to stay on the first line
+            }
+            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, lineCount * this.consoleLineHeight());
             _StdOut.putText(_OsShell.promptStr);
         };
         Console.prototype.lineWrappedText = function (text) {

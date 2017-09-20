@@ -271,14 +271,8 @@ var TSOS;
             }
         };
         Shell.prototype.shellDate = function (args) {
-            var currentDate = new Date();
-            var dateString = currentDate.getFullYear() + "-" +
-                ("0" + (currentDate.getMonth() + 1)).slice(-2) + "-" +
-                ("0" + currentDate.getDate()).slice(-2) + " " +
-                ("0" + currentDate.getHours()).slice(-2) + ":" +
-                ("0" + currentDate.getMinutes()).slice(-2) + ":" +
-                ("0" + currentDate.getSeconds()).slice(-2);
-            _StdOut.putText(dateString);
+            var currentDateString = TSOS.Control.hostGetCurrentDate();
+            _StdOut.putText(currentDateString);
         };
         Shell.prototype.shellWhereAmI = function (args) {
             _StdOut.putText("Not far enough");

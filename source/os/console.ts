@@ -79,7 +79,7 @@ module TSOS {
             } else if (chr == "&darr;" && this.commandHistoryIndex < this.commandHistory.length-1) { // check that do not pass last command entered
                 this.commandHistoryIndex += 1;
             } else { return; } // past bounds; return before erasing screen
-            this.clearLine();
+            this.clearBuffer();
             this.buffer = this.commandHistory[this.commandHistoryIndex];
             this.putText(this.buffer);
         }
@@ -91,7 +91,7 @@ module TSOS {
             });
             if (commandsWithPrefix.length == 1) { // Only 1 possible command with prefix; autocomplete
                 var cmd = commandsWithPrefix[0].command;
-                this.clearLine();
+                this.clearBuffer();
                 this.putText(cmd);
                 this.buffer = cmd;
             } else if (commandsWithPrefix.length > 1) { // Multiple possible commands with prefix; display all
@@ -125,9 +125,15 @@ module TSOS {
             }
         }
 
-        public clearLine(): void {
+        public clearBuffer(): void {
             this.currentXPosition = 0;
-            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, this.consoleLineHeight());
+            // Determine if buffer has line wrapped; clear all lines and adjust currentYPosition if needed
+            var bufferSize = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr+this.buffer);
+            var lineCount = Math.ceil(bufferSize/_Canvas.width);
+            if (lineCount > 1) {
+               this.currentYPosition -= (lineCount-1)*this.consoleLineHeight(); // Subtract 1 because you want to stay on the first line
+            }
+            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, lineCount*this.consoleLineHeight());
             _StdOut.putText(_OsShell.promptStr);
         }
 
