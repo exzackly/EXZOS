@@ -62,6 +62,8 @@ module TSOS {
                     _OsShell.handleInput(this.buffer);
                     // ... and reset our buffer.
                     this.buffer = "";
+                } else if (chr == "&ctrl-r") { // control-r
+                    Control.hostBtnReset_click(null);
                 } else {
                     // This is a "normal" character, so ...
                     // ... draw it on the screen...

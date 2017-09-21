@@ -67,6 +67,9 @@ var TSOS;
                     // ... and reset our buffer.
                     this.buffer = "";
                 }
+                else if (chr == "&ctrl-r") {
+                    TSOS.Control.hostBtnReset_click(null);
+                }
                 else {
                     // This is a "normal" character, so ...
                     // ... draw it on the screen...

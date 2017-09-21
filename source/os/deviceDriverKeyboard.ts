@@ -37,10 +37,13 @@ module TSOS {
             // Parse the params.    TODO: Check that the params are valid and osTrapError if not.
             var keyCode = params[0];
             var isShifted = params[1];
+            var isCtrled = params[2];
             _Kernel.krnTrace("Key code:" + keyCode + " shifted:" + isShifted);
             var chr = "";
             // Check to see if we even want to deal with the key that was pressed.
-            if ((keyCode >= 65) && (keyCode <= 90)) {  // letter
+            if (isCtrled === true && keyCode == 82) { // control-r
+                chr = "&ctrl-r";
+            } else if ((keyCode >= 65) && (keyCode <= 90)) {  // letter
                 chr = (isShifted || this.isCapsLock) && !(isShifted && this.isCapsLock) ? // What language doesn't have XOR?!?
                     String.fromCharCode(keyCode) : // Uppercase A-Z
                     String.fromCharCode(keyCode + 32); // Lowercase a-z
