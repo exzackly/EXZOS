@@ -29,16 +29,6 @@ module TSOS {
                     public isExecuting: boolean = false) {
         }
 
-        //todo: remove?
-        public init(): void {
-            this.PC = 0;
-            this.Acc = 0;
-            this.Xreg = 0;
-            this.Yreg = 0;
-            this.Zflag = 0;
-            this.isExecuting = false;
-        }
-
         public cycle(): void {
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.

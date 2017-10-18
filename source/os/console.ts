@@ -20,9 +20,6 @@ module TSOS {
                     public commandHistoryIndex = 0,
                     public commandHistory = [],
                     public buffer = "") {
-        }
-
-        public init(): void {
             this.clearScreen();
             this.resetXY();
         }

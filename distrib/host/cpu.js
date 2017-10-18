@@ -50,15 +50,6 @@ var TSOS;
                 0xFF: { operandSize: 0, mnemonic: "SYS", fn: this.systemCall } // System Call
             };
         }
-        //todo: remove?
-        Cpu.prototype.init = function () {
-            this.PC = 0;
-            this.Acc = 0;
-            this.Xreg = 0;
-            this.Yreg = 0;
-            this.Zflag = 0;
-            this.isExecuting = false;
-        };
         Cpu.prototype.cycle = function () {
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.

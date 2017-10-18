@@ -25,11 +25,9 @@ var TSOS;
             this.commandHistoryIndex = commandHistoryIndex;
             this.commandHistory = commandHistory;
             this.buffer = buffer;
-        }
-        Console.prototype.init = function () {
             this.clearScreen();
             this.resetXY();
-        };
+        }
         Console.prototype.clearScreen = function () {
             _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
         };
