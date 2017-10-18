@@ -44,6 +44,13 @@ var TSOS;
             }
             return retVal;
         };
+        Utils.toHex = function (num, digits) {
+            if (digits === void 0) { digits = 2; }
+            return ("000000000" + num.toString(16).toUpperCase()).slice(-digits);
+        };
+        Utils.fromHex = function (hexString) {
+            return parseInt(hexString, 16);
+        };
         return Utils;
     }());
     TSOS.Utils = Utils;

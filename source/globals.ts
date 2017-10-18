@@ -19,13 +19,21 @@ const CPU_CLOCK_INTERVAL: number = 100;   // This is in ms (milliseconds) so 100
 const TIMER_IRQ: number = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
                               // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 const KEYBOARD_IRQ: number = 1;
+const SYSCALL_IRQ: number = 2;
+const TERMINATE_PROGRAM_IRQ: number = 3;
+const MEMORY_ACCESS_VIOLATION_IRQ: number = 4;
 
+const SEGMENT_SIZE: number = 256;
+const SEGMENT_COUNT: number = 3;
 
 //
 // Global Variables
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 //
 var _CPU: TSOS.Cpu;  // Utilize TypeScript's type annotation system to ensure that _CPU is an instance of the Cpu class.
+var _SSMode: boolean = false; // Single step mode
+var _Memory: TSOS.Memory;  // Utilize TypeScript's type annotation system to ensure that _Memory is an instance of the Memory class.
+var _Scheduler: TSOS.Scheduler;  // Utilize TypeScript's type annotation system to ensure that _Scheduler is an instance of the Scheduler class.
 
 var _OSclock: number = 0;  // Page 23.
 
@@ -66,5 +74,5 @@ var Glados: any = null;  // This is the function Glados() in glados.js on Labous
 var _GLaDOS: any = null; // If the above is linked in, this is the instantiated instance of Glados.
 
 var onDocumentLoad = function() {
-	TSOS.Control.hostInit();
+    TSOS.Control.hostInit();
 };
