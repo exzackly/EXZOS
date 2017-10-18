@@ -115,6 +115,12 @@ module TSOS {
                                   "- Loads program from User Program Input");
             this.commandList[this.commandList.length] = sc;
 
+            // run
+            sc = new ShellCommand(this.shellRun,
+                                  "run",
+                                  "<pid> - Runs program with specified PID");
+            this.commandList[this.commandList.length] = sc;
+
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
 
@@ -331,7 +337,7 @@ module TSOS {
         }
 
         public shellDate(args) {
-            var currentDateString = Control.hostGetCurrentDate();
+            var currentDateString = Control.hostGetCurrentDateTime();
             _StdOut.putText(currentDateString);
         }
 
@@ -361,11 +367,24 @@ module TSOS {
         }
 
         public shellLoad(args) {
-            var isLoaded = Control.hostLoad(); // Have Control verify and load program
-            if (isLoaded) {
-               _StdOut.putText("Program loaded");
-            } else {
+            var pid = Control.hostLoad(); // Have Control verify and load program
+            if (pid === -1) {  // pid value of -1 denotes invalid program
                 _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z");
+            } else if (pid === -2) {  // pid value of -2 denotes insufficient memory
+                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process");
+            } else {
+                _StdOut.putText("Program loaded. PID " + pid);
+            }
+        }
+
+        public shellRun(args) {
+            if (args.length > 0) {
+                var isLoaded = _Scheduler.loadProcessOnCPU(args[0]);
+                if (!isLoaded) {
+                    _StdOut.putText("PID " + args[0] + " not found. Please supply a valid PID.");
+                }
+            } else {
+                _StdOut.putText("Usage: run <PID>  Please supply a valid PID.");
             }
         }
 

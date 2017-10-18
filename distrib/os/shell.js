@@ -67,6 +67,9 @@ var TSOS;
             // load
             sc = new TSOS.ShellCommand(this.shellLoad, "load", "- Loads program from User Program Input");
             this.commandList[this.commandList.length] = sc;
+            // run
+            sc = new TSOS.ShellCommand(this.shellRun, "run", "<pid> - Runs program with specified PID");
+            this.commandList[this.commandList.length] = sc;
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
             //
@@ -271,7 +274,7 @@ var TSOS;
             }
         };
         Shell.prototype.shellDate = function (args) {
-            var currentDateString = TSOS.Control.hostGetCurrentDate();
+            var currentDateString = TSOS.Control.hostGetCurrentDateTime();
             _StdOut.putText(currentDateString);
         };
         Shell.prototype.shellWhereAmI = function (args) {
@@ -298,12 +301,26 @@ var TSOS;
             _Kernel.krnTrapError("User initiated OS error");
         };
         Shell.prototype.shellLoad = function (args) {
-            var isLoaded = TSOS.Control.hostLoad(); // Have Control verify and load program
-            if (isLoaded) {
-                _StdOut.putText("Program loaded");
+            var pid = TSOS.Control.hostLoad(); // Have Control verify and load program
+            if (pid === -1) {
+                _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z");
+            }
+            else if (pid === -2) {
+                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process");
             }
             else {
-                _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z");
+                _StdOut.putText("Program loaded. PID " + pid);
+            }
+        };
+        Shell.prototype.shellRun = function (args) {
+            if (args.length > 0) {
+                var isLoaded = _Scheduler.loadProcessOnCPU(args[0]);
+                if (!isLoaded) {
+                    _StdOut.putText("PID " + args[0] + " not found. Please supply a valid PID.");
+                }
+            }
+            else {
+                _StdOut.putText("Usage: run <PID>  Please supply a valid PID.");
             }
         };
         return Shell;
