@@ -15,6 +15,9 @@ module TSOS {
 
     export class Mmu {
 
+        // Used to keep track of the status of each segment. False indicates that segment is empty
+        public static segmentStatus: boolean[] = Array(SEGMENT_COUNT).fill(false); // Initialize segments with unused (false) state
+
         public static isValidMemoryAccess(segment: number, logicalAddress: number, size: number): boolean {
             if (segment < 0 || // Before first segment
                 segment > SEGMENT_COUNT-1 || // After last segment
@@ -48,6 +51,17 @@ module TSOS {
 
         public static zeroBytesInSegment(segment: number): void {
             _Memory.zeroBytes((segment*SEGMENT_SIZE), SEGMENT_SIZE);
+        }
+
+        public static determineSegment(): number {
+            // Find first empty segment (where index of segment status === false)
+            for (var i = 0; i < Mmu.segmentStatus.length; i++) {
+                if (Mmu.segmentStatus[i] === false) {
+                    Mmu.segmentStatus[i] = true;
+                    return i;
+                }
+            }
+            return -1; // Empty segment not found
         }
 
     }

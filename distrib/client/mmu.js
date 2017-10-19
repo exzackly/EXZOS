@@ -46,6 +46,18 @@ var TSOS;
         static zeroBytesInSegment(segment) {
             _Memory.zeroBytes((segment * SEGMENT_SIZE), SEGMENT_SIZE);
         }
+        static determineSegment() {
+            // Find first empty segment (where index of segment status === false)
+            for (var i = 0; i < Mmu.segmentStatus.length; i++) {
+                if (Mmu.segmentStatus[i] === false) {
+                    Mmu.segmentStatus[i] = true;
+                    return i;
+                }
+            }
+            return -1; // Empty segment not found
+        }
     }
+    // Used to keep track of the status of each segment. False indicates that segment is empty
+    Mmu.segmentStatus = Array(SEGMENT_COUNT).fill(false); // Initialize segments with unused (false) state
     TSOS.Mmu = Mmu;
 })(TSOS || (TSOS = {}));

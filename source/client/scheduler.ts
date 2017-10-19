@@ -16,9 +16,7 @@ module TSOS {
     export class Scheduler {
 
         constructor(public residentList: {[pid: number]: Pcb;} = {},
-                    public pidIncrementor: number = 0,
-                    public segmentStatus: boolean[] = Array(SEGMENT_COUNT)) {
-            segmentStatus.fill(false); // Initialize segments with unused (false) state
+                    public pidIncrementor: number = 0) {
         }
 
         public getRunningProcesses(): Pcb[] {
@@ -28,7 +26,7 @@ module TSOS {
 
         public loadNewProcess(prog: string): number {
             // Create PCB for new process
-            var segment = this.determineSegment(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor
+            var segment = Mmu.determineSegment(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor
             if (segment === -1) {
                 //todo: load to memory in project 4
                 return -2; // Return value of -2 denotes insufficient memory
@@ -54,7 +52,7 @@ module TSOS {
         public terminateProcess(pid: number): void {
             _CPU.pid = -1;
             var segment = this.residentList[pid].segment;
-            this.segmentStatus[segment] = false; // Clear up segment for reuse
+            Mmu.segmentStatus[segment] = false; // Clear up segment for reuse
             delete this.residentList[pid]; // Remove Pcb from resident list
             Mmu.zeroBytesInSegment(segment); // Remove program from memory
             Control.hostUpdateDisplay(); // Update display
@@ -68,16 +66,6 @@ module TSOS {
             return false;
         }
 
-        public determineSegment(): number {
-            // Find first empty segment (where index of segment status === false)
-            for (var i = 0; i < this.segmentStatus.length; i++) {
-                if (this.segmentStatus[i] === false) {
-                    this.segmentStatus[i] = true;
-                    return i;
-                }
-            }
-            return -1; // Empty segment not found
-        }
 
     }
 }

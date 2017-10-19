@@ -12,11 +12,9 @@
 var TSOS;
 (function (TSOS) {
     class Scheduler {
-        constructor(residentList = {}, pidIncrementor = 0, segmentStatus = Array(SEGMENT_COUNT)) {
+        constructor(residentList = {}, pidIncrementor = 0) {
             this.residentList = residentList;
             this.pidIncrementor = pidIncrementor;
-            this.segmentStatus = segmentStatus;
-            segmentStatus.fill(false); // Initialize segments with unused (false) state
         }
         getRunningProcesses() {
             var PIDs = Object.keys(_Scheduler.residentList);
@@ -24,7 +22,7 @@ var TSOS;
         }
         loadNewProcess(prog) {
             // Create PCB for new process
-            var segment = this.determineSegment(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor
+            var segment = TSOS.Mmu.determineSegment(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor
             if (segment === -1) {
                 //todo: load to memory in project 4
                 return -2; // Return value of -2 denotes insufficient memory
@@ -45,7 +43,7 @@ var TSOS;
         terminateProcess(pid) {
             _CPU.pid = -1;
             var segment = this.residentList[pid].segment;
-            this.segmentStatus[segment] = false; // Clear up segment for reuse
+            TSOS.Mmu.segmentStatus[segment] = false; // Clear up segment for reuse
             delete this.residentList[pid]; // Remove Pcb from resident list
             TSOS.Mmu.zeroBytesInSegment(segment); // Remove program from memory
             TSOS.Control.hostUpdateDisplay(); // Update display
@@ -56,16 +54,6 @@ var TSOS;
                 return true;
             }
             return false;
-        }
-        determineSegment() {
-            // Find first empty segment (where index of segment status === false)
-            for (var i = 0; i < this.segmentStatus.length; i++) {
-                if (this.segmentStatus[i] === false) {
-                    this.segmentStatus[i] = true;
-                    return i;
-                }
-            }
-            return -1; // Empty segment not found
         }
     }
     TSOS.Scheduler = Scheduler;
