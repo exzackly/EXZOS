@@ -39,7 +39,7 @@ module TSOS {
                 var chr = _KernelInputQueue.dequeue();
                 // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
                 if (chr === "&uarr;" || chr === "&darr;") { // up arrow or down arrow pressed
-                   this.putCommandHistory(chr);
+                    this.putCommandHistory(chr);
                 } else if (chr === "&tab;") { // tab
                     this.tabCompleteCommand(this.buffer);
                 } else if (chr === String.fromCharCode(8)) { //     Backspace key
@@ -73,7 +73,7 @@ module TSOS {
         }
 
         public putCommandHistory(chr): void {
-             if (chr === "&uarr;" && this.commandHistoryIndex > 0) { // check that command history has previous command
+            if (chr === "&uarr;" && this.commandHistoryIndex > 0) { // check that command history has previous command
                 this.commandHistoryIndex -= 1;
             } else if (chr == "&darr;" && this.commandHistoryIndex < this.commandHistory.length-1) { // check that do not pass last command entered
                 this.commandHistoryIndex += 1;
@@ -85,17 +85,16 @@ module TSOS {
 
         public tabCompleteCommand(prefix): void {
             if (prefix.length === 0) { return; } // Do not autocomplete if buffer empty
-            var commandsWithPrefix  = _OsShell.commandList.filter(function(cmd){
-                 return cmd.command.startsWith(prefix); // return true is cmd(ShellCommand obj)'s command has prefix
-            });
+            var commands = Object.keys(_OsShell.commandMap);
+            var commandsWithPrefix  = commands.filter(cmd => cmd.startsWith(prefix));
             if (commandsWithPrefix.length == 1) { // Only 1 possible command with prefix; autocomplete
-                var cmd = commandsWithPrefix[0].command;
+                var cmd = commandsWithPrefix[0];
                 this.clearBuffer();
                 this.putText(cmd);
                 this.buffer = cmd;
             } else if (commandsWithPrefix.length > 1) { // Multiple possible commands with prefix; display all
                 // Grab corresponding command names, and join with a space
-                var commandNames = commandsWithPrefix.map(function(cmd){ return cmd.command; }).join(" ");
+                var commandNames = commandsWithPrefix.join(" ");
                 // Display all possible commands with prefix
                 this.advanceLine();
                 this.putText(commandNames);
@@ -130,7 +129,7 @@ module TSOS {
             var bufferSize = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr+this.buffer);
             var lineCount = Math.ceil(bufferSize/_Canvas.width);
             if (lineCount > 1) {
-               this.currentYPosition -= (lineCount-1)*this.consoleLineHeight(); // Subtract 1 because you want to stay on the first line
+                this.currentYPosition -= (lineCount-1)*this.consoleLineHeight(); // Subtract 1 because you want to stay on the first line
             }
             _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, lineCount*this.consoleLineHeight());
             _StdOut.putText(_OsShell.promptStr);
@@ -175,30 +174,30 @@ module TSOS {
                     if (i+1 < lineWrappedText.length) { this.advanceLine(); }
                 }
             }
-         }
+        }
 
         public advanceLine(): void {
             this.currentXPosition = 0;
             this.currentYPosition += this.consoleLineHeight();
             // Scroll if cursor at bottom of screen
-			if (this.currentYPosition >= _Canvas.height) {
-				var scrollYBy = (this.currentYPosition-_Canvas.height)+_FontHeightMargin;
-				var screenshot = _DrawingContext.getImageData(0, 0, _Canvas.width, _Canvas.height);
-				this.clearScreen();
-				this.currentYPosition -= scrollYBy;
-				_DrawingContext.putImageData(screenshot, 0, -scrollYBy);
-			}
+            if (this.currentYPosition >= _Canvas.height) {
+                var scrollYBy = (this.currentYPosition-_Canvas.height)+_FontHeightMargin;
+                var screenshot = _DrawingContext.getImageData(0, 0, _Canvas.width, _Canvas.height);
+                this.clearScreen();
+                this.currentYPosition -= scrollYBy;
+                _DrawingContext.putImageData(screenshot, 0, -scrollYBy);
+            }
         }
 
         public consoleLineHeight(): number {
-			/*
+            /*
              * Font size measures from the baseline to the highest point in the font.
              * Font descent measures from the baseline to the lowest point in the font.
              * Font height margin is extra spacing between the lines.
              */
             return _DefaultFontSize +
-                   _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
-                   _FontHeightMargin;
-		}
+                _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
+                _FontHeightMargin;
+        }
     }
- }
+}

@@ -5,8 +5,8 @@
      ------------------------------ */
 var TSOS;
 (function (TSOS) {
-    var DeviceDriver = (function () {
-        function DeviceDriver() {
+    class DeviceDriver {
+        constructor() {
             this.version = '0.07';
             this.status = 'unloaded';
             this.preemptable = false;
@@ -18,7 +18,6 @@ var TSOS;
             //            public isr = null) {
             //}
         }
-        return DeviceDriver;
-    }());
+    }
     TSOS.DeviceDriver = DeviceDriver;
 })(TSOS || (TSOS = {}));

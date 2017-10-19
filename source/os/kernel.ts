@@ -51,7 +51,6 @@ module TSOS {
             // Launch the shell.
             this.krnTrace("Creating and Launching the shell.");
             _OsShell = new Shell();
-            _OsShell.init();
 
             // Finally, initiate student testing protocol.
             if (_GLaDOS) {

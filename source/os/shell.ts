@@ -17,116 +17,29 @@
 
 module TSOS {
     export class Shell {
-        // Properties
-        public promptStr = ">";
-        public commandList = [];
-        public curses = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
-        public apologies = "[sorry]";
 
-        constructor() {
+        constructor(public  promptStr = ">") {
+            this.putPrompt();
         }
 
-        public init() {
-            var sc;
-            //
-            // Load the command list.
-
-            // ver
-            sc = new ShellCommand(this.shellVer,
-                                  "ver",
-                                  "- Displays the current version data. Persistence is key...");
-            this.commandList[this.commandList.length] = sc;
-
-            // help
-            sc = new ShellCommand(this.shellHelp,
-                                  "help",
-                                  "- This is the help command. Seek help.");
-            this.commandList[this.commandList.length] = sc;
-
-            // shutdown
-            sc = new ShellCommand(this.shellShutdown,
-                                  "shutdown",
-                                  "- Shuts down the virtual OS but leaves the underlying host / hardware simulation running.");
-            this.commandList[this.commandList.length] = sc;
-
-            // cls
-            sc = new ShellCommand(this.shellCls,
-                                  "cls",
-                                  "- Clears the screen and resets the cursor position.");
-            this.commandList[this.commandList.length] = sc;
-
-            // man <topic>
-            sc = new ShellCommand(this.shellMan,
-                                  "man",
-                                  "<topic> - Displays the MANual page for <topic>.");
-            this.commandList[this.commandList.length] = sc;
-
-            // trace <on | off>
-            sc = new ShellCommand(this.shellTrace,
-                                  "trace",
-                                  "<on | off> - Turns the OS trace on or off.");
-            this.commandList[this.commandList.length] = sc;
-
-            // rot13 <string>
-            sc = new ShellCommand(this.shellRot13,
-                                  "rot13",
-                                  "<string> - Does rot13 obfuscation on <string>.");
-            this.commandList[this.commandList.length] = sc;
-
-            // prompt <string>
-            sc = new ShellCommand(this.shellPrompt,
-                                  "prompt",
-                                  "<string> - Sets the prompt.");
-            this.commandList[this.commandList.length] = sc;
-
-            // date
-            sc = new ShellCommand(this.shellDate,
-                                  "date",
-                                  "- Displays the current date and time");
-            this.commandList[this.commandList.length] = sc;
-
-			// whereami
-            sc = new ShellCommand(this.shellWhereAmI,
-                                  "whereami",
-                                  "- Displays the user's current location");
-            this.commandList[this.commandList.length] = sc;
-
-			// procrastinate
-            sc = new ShellCommand(this.shellProcrastinate,
-                                  "procrastinate",
-                                  "- Execute standard workflow. Persistence is key...");
-            this.commandList[this.commandList.length] = sc;
-
-            // status <string>
-            sc = new ShellCommand(this.shellStatus,
-                                  "status",
-                                  "<string> - Sets the status in the taskbar.");
-            this.commandList[this.commandList.length] = sc;
-
-            // erupt
-            sc = new ShellCommand(this.shellErupt,
-                                  "erupt",
-                                  "- Pompeii");
-            this.commandList[this.commandList.length] = sc;
-
-            // load
-            sc = new ShellCommand(this.shellLoad,
-                                  "load",
-                                  "- Loads program from User Program Input");
-            this.commandList[this.commandList.length] = sc;
-
-            // run
-            sc = new ShellCommand(this.shellRun,
-                                  "run",
-                                  "<pid> - Runs program with specified PID");
-            this.commandList[this.commandList.length] = sc;
-
+        public commandMap = {
+            "ver": {desc: "- Displays the current version data. Persistence is key...", fn: this.shellVer},
+            "help": {desc: "- This is the help command. Seek help.", fn: this.shellHelp},
+            "shutdown": {desc: "- Shuts down the virtual OS but leaves the underlying host / hardware simulation running.", fn: this.shellShutdown},
+            "cls": {desc: "- Clears the screen and resets the cursor position.", fn: this.shellCls},
+            "man": {desc: "<topic> - Displays the MANual page for <topic>.", fn: this.shellMan},
+            "trace": {desc: "<on | off> - Turns the OS trace on or off.", fn: this.shellTrace},
+            "rot13": {desc: "<string> - Does rot13 obfuscation on <string>.", fn: this.shellRot13},
+            "prompt": {desc: "<string> - Sets the prompt.", fn: this.shellPrompt},
+            "date": {desc: "- Displays the current date and time.", fn: this.shellDate},
+            "whereami": {desc: "- Displays the user's current location.", fn: this.shellWhereAmI},
+            "procrastinate": {desc: "- Execute standard workflow. Persistence is key...", fn: this.shellProcrastinate},
+            "status": {desc: "<string> - Sets the status in the taskbar.", fn: this.shellStatus},
+            "erupt": {desc: "- Pompeii.", fn: this.shellErupt},
+            "load": {desc: "- Loads program from User Program Input.", fn: this.shellLoad},
+            "run": {desc: "<pid> - Runs program with specified PID.", fn: this.shellRun}
             // ps  - list the running processes and their IDs
             // kill <id> - kills the specified process id.
-
-            //
-            // Display the initial prompt.
-            this.putPrompt();
         }
 
         public putPrompt() {
@@ -145,19 +58,12 @@ module TSOS {
             //
             // Determine the command
             //
-            var fn = this.determineFunction(cmd);
+            var command = this.commandMap[cmd];
             /// Execute command if found
-            if (fn != "undefined") {
-                this.execute(fn.func, args);
+            if (command !== undefined) {
+                this.execute(command.fn, args);
             } else {
-                // It's not found, so check for curses and apologies before declaring the command invalid.
-                if (this.curses.indexOf("[" + Utils.rot13(cmd) + "]") >= 0) {     // Check for curses.
-                    this.execute(this.shellCurse);
-                } else if (this.apologies.indexOf("[" + cmd + "]") >= 0) {        // Check for apologies.
-                    this.execute(this.shellApology);
-                } else { // It's just a bad command. {
-                    this.execute(this.shellInvalidCommand);
-                }
+                this.execute(this.shellInvalidCommand);
             }
         }
 
@@ -166,7 +72,7 @@ module TSOS {
             // We just got a command, so advance the line...
             _StdOut.advanceLine();
             // ... call the command function passing in the args with some über-cool functional programming ...
-            fn(args);
+            fn.call(this, args);
             // Check to see if we need to advance the line again
             if (_StdOut.currentXPosition > 0) {
                 _StdOut.advanceLine();
@@ -203,19 +109,8 @@ module TSOS {
             return retVal;
         }
 
-        public commandWasRepeated(): boolean {
+        public wasCommandRepeated(): boolean {
             return (_Console.commandHistory[_Console.commandHistory.length-1] == _Console.commandHistory[_Console.commandHistory.length-2]);
-        }
-
-        public determineFunction(cmd): any {
-            // TypeScript/JavaScript may not support associative arrays in all browsers so we have to iterate over the
-            // command list in attempt to find a match.  TODO: Is there a better way? Probably. Someone work it out and tell me in class.
-            for (var i = 0; i < this.commandList.length; i++) {
-                if (this.commandList[i].command === cmd) {
-                    return this.commandList[i];
-                }
-            }
-            return "undefined";
         }
 
         //
@@ -224,35 +119,11 @@ module TSOS {
         //
         public shellInvalidCommand() {
             _StdOut.putText("Invalid Command. ");
-            if (_SarcasticMode) {
-                _StdOut.putText("Unbelievable. You, [subject name here],");
-                _StdOut.advanceLine();
-                _StdOut.putText("must be the pride of [subject hometown here].");
-            } else {
-                _StdOut.putText("Type 'help' for, well... help.");
-            }
-        }
-
-        public shellCurse() {
-            _StdOut.putText("Oh, so that's how it's going to be, eh? Fine.");
-            _StdOut.advanceLine();
-            _StdOut.putText("Bitch.");
-            _SarcasticMode = true;
-        }
-
-        public shellApology() {
-           if (_SarcasticMode) {
-              _StdOut.putText("I think we can put our differences behind us.");
-              _StdOut.advanceLine();
-              _StdOut.putText("For science . . . You monster.");
-              _SarcasticMode = false;
-           } else {
-              _StdOut.putText("For what?");
-           }
+            _StdOut.putText("Type 'help' for, well... help.");
         }
 
         public shellVer(args) {
-            if (!_OsShell.commandWasRepeated()) {
+            if (!this.wasCommandRepeated()) {
                 _StdOut.putText("Just assume it's still in alpha");
             } else {
                 _StdOut.putText("If you must know...");
@@ -263,9 +134,10 @@ module TSOS {
 
         public shellHelp(args) {
             _StdOut.putText("Commands:");
-            for (var i in _OsShell.commandList) {
+            var commands = Object.keys(this.commandMap);
+            for (var i = 0; i < commands.length; i++) {
                 _StdOut.advanceLine();
-                _StdOut.putText("  " + _OsShell.commandList[i].command + " " + _OsShell.commandList[i].description);
+                _StdOut.putText("  " + commands[i] + " " + this.commandMap[commands[i]].desc);
             }
         }
 
@@ -283,9 +155,10 @@ module TSOS {
 
         public shellMan(args) {
             if (args.length > 0) {
-                var fn = _OsShell.determineFunction(args[0]);
-                var description = fn != "undefined" ? fn.description : "- Command not found";
-                if (args[0] == "help") {
+                var command = this.commandMap[args[0]];
+                /// Execute command if found
+                var description = command !== undefined ? command.desc : "- Command not found";
+                if (args[0] === "help") {
                     _StdOut.putText("Help displays a list of all available commands.");
                     _StdOut.advanceLine();
                 }
@@ -297,22 +170,14 @@ module TSOS {
 
         public shellTrace(args) {
             if (args.length > 0) {
-                var setting = args[0];
-                switch (setting) {
-                    case "on":
-                        if (_Trace && _SarcasticMode) {
-                            _StdOut.putText("Trace is already on, doofus.");
-                        } else {
-                            _Trace = true;
-                            _StdOut.putText("Trace ON");
-                        }
-                        break;
-                    case "off":
-                        _Trace = false;
-                        _StdOut.putText("Trace OFF");
-                        break;
-                    default:
-                        _StdOut.putText("Invalid arguement.  Usage: trace <on | off>.");
+                if (args[0] === "on") {
+                    _Trace = true;
+                    _StdOut.putText("Trace ON");
+                } else if (args[0] === "off") {
+                    _Trace = false;
+                    _StdOut.putText("Trace OFF");
+                } else {
+                    _StdOut.putText("Invalid argument.  Usage: trace <on | off>.");
                 }
             } else {
                 _StdOut.putText("Usage: trace <on | off>");
@@ -346,7 +211,7 @@ module TSOS {
         }
 
 		public shellProcrastinate(args) {
-			if (!_OsShell.commandWasRepeated()) {
+			if (!this.wasCommandRepeated()) {
 				_StdOut.putText("Later");
 			} else {
 				_StdOut.putText("*sigh* I'll do it tomorrow");

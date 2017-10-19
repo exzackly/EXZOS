@@ -9,15 +9,8 @@
      ------------ */
 var TSOS;
 (function (TSOS) {
-    var Console = (function () {
-        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, commandHistoryIndex, commandHistory, buffer) {
-            if (currentFont === void 0) { currentFont = _DefaultFontFamily; }
-            if (currentFontSize === void 0) { currentFontSize = _DefaultFontSize; }
-            if (currentXPosition === void 0) { currentXPosition = 0; }
-            if (currentYPosition === void 0) { currentYPosition = _DefaultFontSize; }
-            if (commandHistoryIndex === void 0) { commandHistoryIndex = 0; }
-            if (commandHistory === void 0) { commandHistory = []; }
-            if (buffer === void 0) { buffer = ""; }
+    class Console {
+        constructor(currentFont = _DefaultFontFamily, currentFontSize = _DefaultFontSize, currentXPosition = 0, currentYPosition = _DefaultFontSize, commandHistoryIndex = 0, commandHistory = [], buffer = "") {
             this.currentFont = currentFont;
             this.currentFontSize = currentFontSize;
             this.currentXPosition = currentXPosition;
@@ -28,14 +21,14 @@ var TSOS;
             this.clearScreen();
             this.resetXY();
         }
-        Console.prototype.clearScreen = function () {
+        clearScreen() {
             _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
-        };
-        Console.prototype.resetXY = function () {
+        }
+        resetXY() {
             this.currentXPosition = 0;
             this.currentYPosition = this.currentFontSize;
-        };
-        Console.prototype.handleInput = function () {
+        }
+        handleInput() {
             while (_KernelInputQueue.getSize() > 0) {
                 // Get the next character from the kernel input queue.
                 var chr = _KernelInputQueue.dequeue();
@@ -77,8 +70,8 @@ var TSOS;
                 }
                 // TODO: Write a case for Ctrl-C.
             }
-        };
-        Console.prototype.putCommandHistory = function (chr) {
+        }
+        putCommandHistory(chr) {
             if (chr === "&uarr;" && this.commandHistoryIndex > 0) {
                 this.commandHistoryIndex -= 1;
             }
@@ -91,23 +84,22 @@ var TSOS;
             this.clearBuffer();
             this.buffer = this.commandHistory[this.commandHistoryIndex];
             this.putText(this.buffer);
-        };
-        Console.prototype.tabCompleteCommand = function (prefix) {
+        }
+        tabCompleteCommand(prefix) {
             if (prefix.length === 0) {
                 return;
             } // Do not autocomplete if buffer empty
-            var commandsWithPrefix = _OsShell.commandList.filter(function (cmd) {
-                return cmd.command.startsWith(prefix); // return true is cmd(ShellCommand obj)'s command has prefix
-            });
+            var commands = Object.keys(_OsShell.commandMap);
+            var commandsWithPrefix = commands.filter(cmd => cmd.startsWith(prefix));
             if (commandsWithPrefix.length == 1) {
-                var cmd = commandsWithPrefix[0].command;
+                var cmd = commandsWithPrefix[0];
                 this.clearBuffer();
                 this.putText(cmd);
                 this.buffer = cmd;
             }
             else if (commandsWithPrefix.length > 1) {
                 // Grab corresponding command names, and join with a space
-                var commandNames = commandsWithPrefix.map(function (cmd) { return cmd.command; }).join(" ");
+                var commandNames = commandsWithPrefix.join(" ");
                 // Display all possible commands with prefix
                 this.advanceLine();
                 this.putText(commandNames);
@@ -116,8 +108,8 @@ var TSOS;
                 _OsShell.putPrompt();
                 this.putText(this.buffer);
             }
-        };
-        Console.prototype.backspaceCharacter = function () {
+        }
+        backspaceCharacter() {
             var lastChr = this.buffer.slice(-1); // Get last character in buffer (character to backspace)
             // Calculate width to clear
             var backspaceWidth = _DrawingContext.measureText(this.currentFont, this.currentFontSize, lastChr);
@@ -133,8 +125,8 @@ var TSOS;
                 xPosition = xPosition % _Canvas.width; // If there are multiple lines worth of text in the buffer, calculate the width of the last line
                 this.currentXPosition = xPosition;
             }
-        };
-        Console.prototype.clearBuffer = function () {
+        }
+        clearBuffer() {
             this.currentXPosition = 0;
             // Determine if buffer has line wrapped; clear all lines and adjust currentYPosition if needed
             var bufferSize = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + this.buffer);
@@ -144,8 +136,8 @@ var TSOS;
             }
             _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, lineCount * this.consoleLineHeight());
             _StdOut.putText(_OsShell.promptStr);
-        };
-        Console.prototype.lineWrappedText = function (text) {
+        }
+        lineWrappedText(text) {
             var availableWidth = _Canvas.width - this.currentXPosition; // Calculate remaining space on the current line
             var buffer = "";
             var lineWrappedText = [];
@@ -161,8 +153,8 @@ var TSOS;
                 availableWidth = _Canvas.width; // Subsequent lines have full-width of screen
             }
             return lineWrappedText;
-        };
-        Console.prototype.putText = function (text) {
+        }
+        putText(text) {
             // My first inclination here was to write two functions: putChar() and putString().
             // Then I remembered that JavaScript is (sadly) untyped and it won't differentiate
             // between the two.  So rather than be like PHP and write two (or more) functions that
@@ -185,8 +177,8 @@ var TSOS;
                     }
                 }
             }
-        };
-        Console.prototype.advanceLine = function () {
+        }
+        advanceLine() {
             this.currentXPosition = 0;
             this.currentYPosition += this.consoleLineHeight();
             // Scroll if cursor at bottom of screen
@@ -197,8 +189,8 @@ var TSOS;
                 this.currentYPosition -= scrollYBy;
                 _DrawingContext.putImageData(screenshot, 0, -scrollYBy);
             }
-        };
-        Console.prototype.consoleLineHeight = function () {
+        }
+        consoleLineHeight() {
             /*
              * Font size measures from the baseline to the highest point in the font.
              * Font descent measures from the baseline to the lowest point in the font.
@@ -207,8 +199,7 @@ var TSOS;
             return _DefaultFontSize +
                 _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
                 _FontHeightMargin;
-        };
-        return Console;
-    }());
+        }
+    }
     TSOS.Console = Console;
 })(TSOS || (TSOS = {}));

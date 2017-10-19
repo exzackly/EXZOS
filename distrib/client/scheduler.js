@@ -11,11 +11,8 @@
      ------------ */
 var TSOS;
 (function (TSOS) {
-    var Scheduler = (function () {
-        function Scheduler(residentList, pidIncrementor, segmentStatus) {
-            if (residentList === void 0) { residentList = {}; }
-            if (pidIncrementor === void 0) { pidIncrementor = 0; }
-            if (segmentStatus === void 0) { segmentStatus = Array(SEGMENT_COUNT); }
+    class Scheduler {
+        constructor(residentList = {}, pidIncrementor = 0, segmentStatus = Array(SEGMENT_COUNT)) {
             this.residentList = residentList;
             this.pidIncrementor = pidIncrementor;
             this.segmentStatus = segmentStatus;
@@ -23,7 +20,7 @@ var TSOS;
                 segmentStatus[i] = false; // Initialize segments with unused (false) state
             }
         }
-        Scheduler.prototype.loadNewProcess = function (prog) {
+        loadNewProcess(prog) {
             // Create PCB for new process
             var segment = this.determineSegment(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor
             if (segment === -1) {
@@ -37,28 +34,28 @@ var TSOS;
             this.residentList[pid] = new TSOS.Pcb(pid, segment, priority);
             // Load program into memory
             var progArray = prog.match(/.{2}/g); // Break program into array of length 2 hex codes
-            var program = progArray.map(function (x) { return TSOS.Utils.fromHex(x); }); // Convert program from hex to decimal
+            var program = progArray.map(x => TSOS.Utils.fromHex(x)); // Convert program from hex to decimal
             TSOS.Mmu.zeroBytesInSegment(segment); // Zero memory segment
             TSOS.Mmu.setBytesAtLogicalAddress(segment, 0, program); // Load program into memory segment
             _CPU.updateDisplay(); // Update display
             return pid;
-        };
-        Scheduler.prototype.terminateProcess = function (pid) {
+        }
+        terminateProcess(pid) {
             _CPU.pid = -1;
             var segment = this.residentList[pid].segment;
             this.segmentStatus[segment] = false; // Clear up segment for reuse
             delete this.residentList[pid]; // Remove Pcb from resident list
             TSOS.Mmu.zeroBytesInSegment(segment); // Remove program from memory
             _CPU.updateDisplay(); // Update display
-        };
-        Scheduler.prototype.loadProcessOnCPU = function (pid) {
+        }
+        loadProcessOnCPU(pid) {
             if (pid in this.residentList) {
                 _CPU.loadProcess(this.residentList[pid]);
                 return true;
             }
             return false;
-        };
-        Scheduler.prototype.determineSegment = function () {
+        }
+        determineSegment() {
             // Find first empty segment (where index of segment status === false)
             for (var i = 0; i < this.segmentStatus.length; i++) {
                 if (this.segmentStatus[i] === false) {
@@ -67,8 +64,7 @@ var TSOS;
                 }
             }
             return -1; // Empty segment not found
-        };
-        return Scheduler;
-    }());
+        }
+    }
     TSOS.Scheduler = Scheduler;
 })(TSOS || (TSOS = {}));

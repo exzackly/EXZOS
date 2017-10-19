@@ -15,16 +15,8 @@
      ------------ */
 var TSOS;
 (function (TSOS) {
-    var Cpu = (function () {
-        function Cpu(pid, segment, PC, Acc, Xreg, Yreg, Zflag, isExecuting) {
-            if (pid === void 0) { pid = -1; }
-            if (segment === void 0) { segment = -1; }
-            if (PC === void 0) { PC = 0; }
-            if (Acc === void 0) { Acc = 0; }
-            if (Xreg === void 0) { Xreg = 0; }
-            if (Yreg === void 0) { Yreg = 0; }
-            if (Zflag === void 0) { Zflag = 0; }
-            if (isExecuting === void 0) { isExecuting = false; }
+    class Cpu {
+        constructor(pid = -1, segment = -1, PC = 0, Acc = 0, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false) {
             this.pid = pid;
             this.segment = segment;
             this.PC = PC;
@@ -50,7 +42,7 @@ var TSOS;
                 0xFF: { operandSize: 0, mnemonic: "SYS", fn: this.systemCall } // System Call
             };
         }
-        Cpu.prototype.cycle = function () {
+        cycle() {
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.
             //fetch
@@ -71,11 +63,11 @@ var TSOS;
                 this.isExecuting = false;
             }
             this.updateDisplay();
-        };
-        Cpu.prototype.storeProcess = function (pcb) {
+        }
+        storeProcess(pcb) {
             return pcb;
-        };
-        Cpu.prototype.loadProcess = function (pcb) {
+        }
+        loadProcess(pcb) {
             this.pid = pcb.pid;
             this.segment = pcb.segment;
             this.PC = pcb.PC;
@@ -85,85 +77,85 @@ var TSOS;
             this.Zflag = pcb.Zflag;
             this.isExecuting = true;
             this.updateDisplay();
-        };
-        Cpu.prototype.loadAccumulatorWithConstant = function () {
+        }
+        loadAccumulatorWithConstant() {
             /*
             A9 02 00 00
             Acc should be 02
              */
             this.Acc = TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC);
-        };
-        Cpu.prototype.loadAccumulatorFromMemory = function () {
+        }
+        loadAccumulatorFromMemory() {
             /*
             AD 05 00 00 00 03
             Acc should be 03
              */
             this.Acc = this.getBytesAtNextAddress(this.PC);
-        };
-        Cpu.prototype.storeAccumulatorInMemory = function () {
+        }
+        storeAccumulatorInMemory() {
             /*
             A9 04 8D 07 00 00 00 02
             0x07 should be 04
              */
             var loc = this.getNextAddress(this.PC);
             TSOS.Mmu.setByteAtLogicalAddress(this.segment, loc, this.Acc);
-        };
-        Cpu.prototype.addWithCarry = function () {
+        }
+        addWithCarry() {
             /*
             A9 FC 6D 07 00 00 00 07
             Acc should be 03
              */
             //todo: test carry portion
             this.Acc += this.getBytesAtNextAddress(this.PC);
-        };
-        Cpu.prototype.loadXRegWithConstant = function () {
+        }
+        loadXRegWithConstant() {
             /*
             A2 05 00 00
             Xreg should be 05
              */
             this.Xreg = TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC);
-        };
-        Cpu.prototype.loadXRegFromMemory = function () {
+        }
+        loadXRegFromMemory() {
             /*
             AE 05 00 00 00 06
             Xreg should be 06
              */
             this.Xreg = this.getBytesAtNextAddress(this.PC);
-        };
-        Cpu.prototype.loadYRegWithConstant = function () {
+        }
+        loadYRegWithConstant() {
             /*
             A0 07 00 00
             Yreg should be 07
              */
             this.Yreg = TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC);
-        };
-        Cpu.prototype.loadYRegFromMemory = function () {
+        }
+        loadYRegFromMemory() {
             /*
             AC 05 00 00 00 08
             Yreg should be 08
              */
             this.Yreg = this.getBytesAtNextAddress(this.PC);
-        };
-        Cpu.prototype.noOperation = function () {
+        }
+        noOperation() {
             /*
             EA EA EA 00 00
             PC should be 04
              */
             return;
-        };
-        Cpu.prototype.brk = function () {
+        }
+        brk() {
             this.isExecuting = false;
             _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROGRAM_IRQ, this.pid));
-        };
-        Cpu.prototype.compareMemoryWithXReg = function () {
+        }
+        compareMemoryWithXReg() {
             /*
             A2 07 EC 07 00 00 00 07
             Zflag should be 01
              */
             var memory = this.getBytesAtNextAddress(this.PC);
             this.Zflag = memory == this.Xreg ? 1 : 0;
-        };
-        Cpu.prototype.branchIfNotEqual = function () {
+        }
+        branchIfNotEqual() {
             /*
             D0 02 A9 07 00 00
             Acc should be 00
@@ -173,8 +165,8 @@ var TSOS;
             if (this.Zflag === 0) {
                 this.PC = (this.PC + TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC)) % SEGMENT_SIZE;
             }
-        };
-        Cpu.prototype.incrementByte = function () {
+        }
+        incrementByte() {
             /*
             EE 05 00 00 00 08
             0x05 should be 09
@@ -182,8 +174,8 @@ var TSOS;
             var loc = this.getNextAddress(this.PC);
             var value = this.getBytesAtNextAddress(this.PC);
             TSOS.Mmu.setByteAtLogicalAddress(this.segment, loc, value + 1);
-        };
-        Cpu.prototype.systemCall = function () {
+        }
+        systemCall() {
             /*
             A2 01 A0 0A FF 00 00
             Should print 10
@@ -205,32 +197,31 @@ var TSOS;
                 }
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(SYSCALL_IRQ, output));
             }
-        };
-        Cpu.prototype.getNextAddress = function (location) {
+        }
+        getNextAddress(location) {
             var address = TSOS.Mmu.getBytesAtLogicalAddress(this.segment, location, 2); // todo: Replace magic number?
             // Regarding Kernighan's law: just get it right the first time and you won't ever have to debug
             // If you can't inherently understand this just by looking at it, you really need to ask yourself if you belong here /s
             // Seriously though look up reduce, it can do a lot of cool shit
-            return address.reduce(function (a, v, i) { return a + (v * Math.pow(256, i)); }); // It's not a magic number, we're working in hex
-        };
-        Cpu.prototype.getBytesAtNextAddress = function (location) {
+            return address.reduce((a, v, i) => a + (v * Math.pow(256, i))); // It's not a magic number, we're working in hex
+        }
+        getBytesAtNextAddress(location) {
             var address = this.getNextAddress(location);
             return TSOS.Mmu.getByteAtLogicalAddress(this.segment, address);
-        };
-        Cpu.prototype.updatePCB = function (pcb) {
+        }
+        updatePCB(pcb) {
             pcb.PC = this.PC;
             pcb.Acc = this.Acc;
             pcb.Xreg = this.Xreg;
             pcb.Yreg = this.Yreg;
             pcb.Zflag = this.Zflag;
             pcb.isExecuting = this.isExecuting;
-        };
-        Cpu.prototype.updateDisplay = function () {
+        }
+        updateDisplay() {
             TSOS.Control.hostUpdateDisplayCPU();
             TSOS.Control.hostUpdateDisplayMemory();
             TSOS.Control.hostUpdateDisplayProcesses();
-        };
-        return Cpu;
-    }());
+        }
+    }
     TSOS.Cpu = Cpu;
 })(TSOS || (TSOS = {}));

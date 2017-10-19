@@ -5,10 +5,8 @@
    -------- */
 var TSOS;
 (function (TSOS) {
-    var Utils = (function () {
-        function Utils() {
-        }
-        Utils.trim = function (str) {
+    class Utils {
+        static trim(str) {
             // Use a regular expression to remove leading and trailing spaces.
             return str.replace(/^\s+ | \s+$/g, "");
             /*
@@ -19,8 +17,8 @@ var TSOS;
             - "g" makes is global, so we get all the whitespace.
             - "" is nothing, which is what we replace the whitespace with.
             */
-        };
-        Utils.rot13 = function (str) {
+        }
+        static rot13(str) {
             /*
                This is an easy-to understand implementation of the famous and common Rot13 obfuscator.
                You can do this in three lines with a complex regular expression, but I'd have
@@ -43,15 +41,13 @@ var TSOS;
                 }
             }
             return retVal;
-        };
-        Utils.toHex = function (num, digits) {
-            if (digits === void 0) { digits = 2; }
+        }
+        static toHex(num, digits = 2) {
             return ("000000000" + num.toString(16).toUpperCase()).slice(-digits);
-        };
-        Utils.fromHex = function (hexString) {
+        }
+        static fromHex(hexString) {
             return parseInt(hexString, 16);
-        };
-        return Utils;
-    }());
+        }
+    }
     TSOS.Utils = Utils;
 })(TSOS || (TSOS = {}));
