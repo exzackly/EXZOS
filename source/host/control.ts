@@ -131,11 +131,9 @@ module TSOS {
 
         public static hostUpdateDisplayMemory(): void {
             var memoryElement = <HTMLInputElement> document.getElementById("displayMemory");
-            //todo: replace 768 with variable
-            var memory = _Memory.getBytes(0, 768);
+            var memory = _Memory.getBytes(0, SEGMENT_SIZE*SEGMENT_COUNT);
             var memoryData = "<table style='table-layout:fixed; width: 100%; text-align: center;'><tbody>";
-            //todo: replace 768 with variable
-            for (var i = 0; i < 768; i += 8) {
+            for (var i = 0; i < SEGMENT_SIZE*SEGMENT_COUNT; i += 8) {
                 memoryData += "<tr><td style='font-weight: bold'>0x" + Utils.toHex(i, 3) + "</td>" +
                     "<td align='right'>" + Utils.toHex(memory[i]) + "</td><td align='right'>" + Utils.toHex(memory[i+1]) + "</td>" +
                     "<td align='right'>" + Utils.toHex(memory[i+2]) + "</td><td align='right'>" + Utils.toHex(memory[i+3]) + "</td>" +
@@ -149,19 +147,19 @@ module TSOS {
         public static hostUpdateDisplayProcesses(): void {
             var processData = "<tbody><tr><th>PID</th><th>PC</th><th>ACC</th><th>X</th><th>Y</th>" +
                 "<th>Z</th><th>Priority</th><th>State</th><th>Location</th></tr>";
-            var PIDs = Object.keys(_Scheduler.residentList);
-            if (PIDs.length == 0) {
+            var processes = _Scheduler.getRunningProcesses();
+            if (processes.length == 0) {
                 processData += "<tr><td colspan='9'>No programs in execution</td></tr>";
             } else {
-                for (var i = 0; i < PIDs.length; i++) {
-                    var process = _Scheduler.residentList[PIDs[i]];
+                for (var i = 0; i < processes.length; i++) {
+                    var process = processes[i];
                     var state = "";
                     if (process.isExecuting === true) {
                         state = "Executing";
                     } else {
                         state = _CPU.isExecuting === true ? "Waiting" : "Ready";
                     }
-                    var location = process.segment >= 0 && process.segment < SEGMENT_COUNT ? "Memory" : "Disk";
+                    var location = process.segment !== -1 ? "Memory" : "Disk";
                     processData += `<tr><td>${process.pid}</td><td>${Utils.toHex(process.PC)}</td><td>${Utils.toHex(process.Acc)}</td>` +
                         `<td>${Utils.toHex(process.Xreg)}</td><td>${Utils.toHex(process.Yreg)}</td><td>${process.Zflag}</td>` +
                         `<td>${process.priority}</td><td>${state}</td><td>${location}</td></tr>`;

@@ -23,6 +23,11 @@ module TSOS {
             }
         }
 
+        public getRunningProcesses(): Pcb[] {
+            var PIDs = Object.keys(_Scheduler.residentList);
+            return PIDs.map(x => this.residentList[x]);
+        }
+
         public loadNewProcess(prog: string): number {
             // Create PCB for new process
             var segment = this.determineSegment(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor

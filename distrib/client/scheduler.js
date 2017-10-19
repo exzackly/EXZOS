@@ -20,6 +20,10 @@ var TSOS;
                 segmentStatus[i] = false; // Initialize segments with unused (false) state
             }
         }
+        getRunningProcesses() {
+            var PIDs = Object.keys(_Scheduler.residentList);
+            return PIDs.map(x => this.residentList[x]);
+        }
         loadNewProcess(prog) {
             // Create PCB for new process
             var segment = this.determineSegment(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor

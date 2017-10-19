@@ -37,9 +37,9 @@ module TSOS {
             "status": {desc: "<string> - Sets the status in the taskbar.", fn: this.shellStatus},
             "erupt": {desc: "- Pompeii.", fn: this.shellErupt},
             "load": {desc: "- Loads program from User Program Input.", fn: this.shellLoad},
-            "run": {desc: "<pid> - Runs program with specified PID.", fn: this.shellRun}
-            // ps  - list the running processes and their IDs
-            // kill <id> - kills the specified process id.
+            "run": {desc: "<pid> - Runs program with specified PID.", fn: this.shellRun},
+            "ps": {desc: "- Displays a list of the running processes and their IDs.", fn: this.shellPs},
+            "kill": {desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill}
         }
 
         public putPrompt() {
@@ -195,7 +195,7 @@ module TSOS {
 
         public shellPrompt(args) {
             if (args.length > 0) {
-                _OsShell.promptStr = args[0];
+                this.promptStr = args[0];
             } else {
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
             }
@@ -251,6 +251,30 @@ module TSOS {
             } else {
                 _StdOut.putText("Usage: run <PID>  Please supply a valid PID.");
             }
+        }
+
+        public shellPs(args) {
+            var processes = _Scheduler.getRunningProcesses();
+            for (var i = 0; i < processes.length; i++) {
+                var process = processes[i];
+                var location = process.segment !== -1 ? "Memory" : "Disk";
+                _StdOut.putText(process.pid + " " + location);
+                _StdOut.advanceLine();
+            }
+        }
+
+        public shellKill(args) {
+            if (args.length > 0) {
+                if (_Scheduler.residentList[args[0]] !== undefined) {
+                    _StdOut.putText("PID " + args[0] + " killed.");
+                    _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROGRAM_IRQ, args[0]));
+                } else {
+                    _StdOut.putText("PID " + args[0] + " not found. Please supply a valid PID.");
+                }
+            } else {
+                _StdOut.putText("Usage: kill <PID>  Please supply a valid PID.");
+            }
+
         }
 
     }
