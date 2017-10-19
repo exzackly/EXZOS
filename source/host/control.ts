@@ -26,6 +26,7 @@
 module TSOS {
 
     export class Control {
+        public static hostLogHistory: {clock: number, source: string, msg: string, now: string}[] = [];
 
         public static hostInit(): void {
             // This is called from index.html's onLoad event via the onDocumentLoad function pointer.
@@ -57,6 +58,15 @@ module TSOS {
             }
         }
 
+        public static hostLogHistoryString(): string {
+            var hostLog = "";
+            for (var i = 0; i < Control.hostLogHistory.length; i++) {
+                var item = Control.hostLogHistory[i];
+                hostLog = "clock:" + item.clock.toString() + " now: " + item.now + " <b>" + item.source + "</b>:<i>" + item.msg + "</i><br>" + hostLog;
+            }
+            return hostLog;
+        }
+
         public static hostLog(msg: string, source: string = "?"): void {
             // Note the OS CLOCK.
             var clock: number = _OSclock;
@@ -66,12 +76,17 @@ module TSOS {
             var now: string = Control.hostGetCurrentDateTime(true);
 
             // Build the log string.
-            var str: string = "({ clock:" + clock + ", source:" + source + ", msg:" + msg + ", now:" + now  + " })"  + "<br>";
-
+            var newLog = {clock, source, msg, now};
+            var lastLog = Control.hostLogHistory[Control.hostLogHistory.length-1];
+            // Compare new log string with old; replace old with new if same source and msg
+            if (lastLog !== undefined && source === lastLog.source && msg === lastLog.msg) {
+                Control.hostLogHistory[Control.hostLogHistory.length-1] = newLog; // source and msg same; replace old with new
+            } else {
+                Control.hostLogHistory.push(newLog); // new log string; append to hostLogHistory
+            }
             // Update the log console.
             var taLog = <HTMLInputElement> document.getElementById("taHostLog");
-            taLog.innerHTML = str + taLog.innerHTML;
-            // TODO in the future: Optionally update a log database or some streaming service.
+            taLog.innerHTML = Control.hostLogHistoryString();
         }
 
         public static hostGetCurrentDateTime(hideYear: boolean = false): string {
@@ -108,8 +123,10 @@ module TSOS {
         public static hostLoad(): number {
             // Grab text from taProgramInput
             var program = (<HTMLInputElement> document.getElementById("taProgramInput")).value;
-            if (program.length == 0) { return -1; } // taProgramInput is empty; nothing to load
             program = program.replace(/\s+/g, ""); // Remove whitespace
+            if (program.length == 0 || program.length > (SEGMENT_SIZE*2)) { // taProgramInput is empty or too large
+                return -1; // Return value of -1 denotes invalid program
+            }
             var re = new RegExp("[^0-9a-fA-F]"); // Match any non-hex character
             var invalidCharactersFound = re.test(program); // Test program for invalid characters
             if (invalidCharactersFound === true) {
@@ -117,6 +134,12 @@ module TSOS {
             } else {
                 return _Scheduler.loadNewProcess(program); // Pass to Scheduler to finish load and assign PID
             }
+        }
+
+        public static hostUpdateDisplay(): void {
+            Control.hostUpdateDisplayCPU();
+            Control.hostUpdateDisplayMemory();
+            Control.hostUpdateDisplayProcesses();
         }
 
         public static hostUpdateDisplayCPU(): void {
@@ -197,6 +220,8 @@ module TSOS {
             // .. and call the OS Kernel Bootstrap routine.
             _Kernel = new Kernel();
             _Kernel.krnBootstrap();  // _GLaDOS.afterStartup() will get called in there, if configured.
+
+            Control.hostUpdateDisplay();
         }
 
         public static hostBtnHaltOS_click(btn): void {

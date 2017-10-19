@@ -52,8 +52,7 @@ module TSOS {
                 this.isExecuting = false;
             }
 
-            this.updateDisplay();
-
+            Control.hostUpdateDisplay();
         }
 
         public storeProcess(pcb: Pcb): Pcb {
@@ -69,7 +68,7 @@ module TSOS {
             this.Yreg = pcb.Yreg;
             this.Zflag = pcb.Zflag;
             this.isExecuting = true;
-            this.updateDisplay();
+            Control.hostUpdateDisplay();
         }
 
         public opCodeMap = {
@@ -240,12 +239,6 @@ module TSOS {
             pcb.Yreg = this.Yreg;
             pcb.Zflag = this.Zflag;
             pcb.isExecuting = this.isExecuting;
-        }
-
-        public updateDisplay(): void {
-            Control.hostUpdateDisplayCPU();
-            Control.hostUpdateDisplayMemory();
-            Control.hostUpdateDisplayProcesses();
         }
 
     }

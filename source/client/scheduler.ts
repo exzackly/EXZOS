@@ -18,9 +18,7 @@ module TSOS {
         constructor(public residentList: {[pid: number]: Pcb;} = {},
                     public pidIncrementor: number = 0,
                     public segmentStatus: boolean[] = Array(SEGMENT_COUNT)) {
-            for (var i = 0; i < segmentStatus.length; i++) {
-                segmentStatus[i] = false; // Initialize segments with unused (false) state
-            }
+            segmentStatus.fill(false); // Initialize segments with unused (false) state
         }
 
         public getRunningProcesses(): Pcb[] {
@@ -48,7 +46,7 @@ module TSOS {
             Mmu.zeroBytesInSegment(segment); // Zero memory segment
             Mmu.setBytesAtLogicalAddress(segment,0, program); // Load program into memory segment
 
-            _CPU.updateDisplay(); // Update display
+            Control.hostUpdateDisplay(); // Update display
 
             return pid;
         }
@@ -59,7 +57,7 @@ module TSOS {
             this.segmentStatus[segment] = false; // Clear up segment for reuse
             delete this.residentList[pid]; // Remove Pcb from resident list
             Mmu.zeroBytesInSegment(segment); // Remove program from memory
-            _CPU.updateDisplay(); // Update display
+            Control.hostUpdateDisplay(); // Update display
         }
 
         public loadProcessOnCPU(pid: number): boolean {

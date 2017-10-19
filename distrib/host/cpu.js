@@ -62,7 +62,7 @@ var TSOS;
             if (_SSMode === true) {
                 this.isExecuting = false;
             }
-            this.updateDisplay();
+            TSOS.Control.hostUpdateDisplay();
         }
         storeProcess(pcb) {
             return pcb;
@@ -76,7 +76,7 @@ var TSOS;
             this.Yreg = pcb.Yreg;
             this.Zflag = pcb.Zflag;
             this.isExecuting = true;
-            this.updateDisplay();
+            TSOS.Control.hostUpdateDisplay();
         }
         loadAccumulatorWithConstant() {
             /*
@@ -216,11 +216,6 @@ var TSOS;
             pcb.Yreg = this.Yreg;
             pcb.Zflag = this.Zflag;
             pcb.isExecuting = this.isExecuting;
-        }
-        updateDisplay() {
-            TSOS.Control.hostUpdateDisplayCPU();
-            TSOS.Control.hostUpdateDisplayMemory();
-            TSOS.Control.hostUpdateDisplayProcesses();
         }
     }
     TSOS.Cpu = Cpu;

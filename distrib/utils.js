@@ -43,7 +43,7 @@ var TSOS;
             return retVal;
         }
         static toHex(num, digits = 2) {
-            return ("000000000" + num.toString(16).toUpperCase()).slice(-digits);
+            return ("0".repeat(digits) + num.toString(16).toUpperCase()).slice(-digits);
         }
         static fromHex(hexString) {
             return parseInt(hexString, 16);

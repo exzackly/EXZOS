@@ -17,7 +17,7 @@ var TSOS;
             if (segment < 0 ||
                 segment > SEGMENT_COUNT - 1 ||
                 logicalAddress < 0x0 ||
-                logicalAddress + size >= SEGMENT_SIZE) {
+                logicalAddress + size > SEGMENT_SIZE) {
                 // Memory access violation found; throw shit fit
                 _CPU.isExecuting = false;
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(MEMORY_ACCESS_VIOLATION_IRQ, _CPU.pid));

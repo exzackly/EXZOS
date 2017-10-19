@@ -16,9 +16,7 @@ var TSOS;
             this.residentList = residentList;
             this.pidIncrementor = pidIncrementor;
             this.segmentStatus = segmentStatus;
-            for (var i = 0; i < segmentStatus.length; i++) {
-                segmentStatus[i] = false; // Initialize segments with unused (false) state
-            }
+            segmentStatus.fill(false); // Initialize segments with unused (false) state
         }
         getRunningProcesses() {
             var PIDs = Object.keys(_Scheduler.residentList);
@@ -41,7 +39,7 @@ var TSOS;
             var program = progArray.map(x => TSOS.Utils.fromHex(x)); // Convert program from hex to decimal
             TSOS.Mmu.zeroBytesInSegment(segment); // Zero memory segment
             TSOS.Mmu.setBytesAtLogicalAddress(segment, 0, program); // Load program into memory segment
-            _CPU.updateDisplay(); // Update display
+            TSOS.Control.hostUpdateDisplay(); // Update display
             return pid;
         }
         terminateProcess(pid) {
@@ -50,7 +48,7 @@ var TSOS;
             this.segmentStatus[segment] = false; // Clear up segment for reuse
             delete this.residentList[pid]; // Remove Pcb from resident list
             TSOS.Mmu.zeroBytesInSegment(segment); // Remove program from memory
-            _CPU.updateDisplay(); // Update display
+            TSOS.Control.hostUpdateDisplay(); // Update display
         }
         loadProcessOnCPU(pid) {
             if (pid in this.residentList) {

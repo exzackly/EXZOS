@@ -47,6 +47,14 @@ var TSOS;
                 _GLaDOS.init();
             }
         }
+        static hostLogHistoryString() {
+            var hostLog = "";
+            for (var i = 0; i < Control.hostLogHistory.length; i++) {
+                var item = Control.hostLogHistory[i];
+                hostLog = "clock:" + item.clock.toString() + " now: " + item.now + " <b>" + item.source + "</b>:<i>" + item.msg + "</i><br>" + hostLog;
+            }
+            return hostLog;
+        }
         static hostLog(msg, source = "?") {
             // Note the OS CLOCK.
             var clock = _OSclock;
@@ -54,11 +62,18 @@ var TSOS;
             //var now: number = new Date().getTime();
             var now = Control.hostGetCurrentDateTime(true);
             // Build the log string.
-            var str = "({ clock:" + clock + ", source:" + source + ", msg:" + msg + ", now:" + now + " })" + "<br>";
+            var newLog = { clock, source, msg, now };
+            var lastLog = Control.hostLogHistory[Control.hostLogHistory.length - 1];
+            // Compare new log string with old; replace old with new if same source and msg
+            if (lastLog !== undefined && source === lastLog.source && msg === lastLog.msg) {
+                Control.hostLogHistory[Control.hostLogHistory.length - 1] = newLog; // source and msg same; replace old with new
+            }
+            else {
+                Control.hostLogHistory.push(newLog); // new log string; append to hostLogHistory
+            }
             // Update the log console.
             var taLog = document.getElementById("taHostLog");
-            taLog.innerHTML = str + taLog.innerHTML;
-            // TODO in the future: Optionally update a log database or some streaming service.
+            taLog.innerHTML = Control.hostLogHistoryString();
         }
         static hostGetCurrentDateTime(hideYear = false) {
             var currentDate = new Date();
@@ -90,10 +105,10 @@ var TSOS;
         static hostLoad() {
             // Grab text from taProgramInput
             var program = document.getElementById("taProgramInput").value;
-            if (program.length == 0) {
-                return -1;
-            } // taProgramInput is empty; nothing to load
             program = program.replace(/\s+/g, ""); // Remove whitespace
+            if (program.length == 0 || program.length > (SEGMENT_SIZE * 2)) {
+                return -1; // Return value of -1 denotes invalid program
+            }
             var re = new RegExp("[^0-9a-fA-F]"); // Match any non-hex character
             var invalidCharactersFound = re.test(program); // Test program for invalid characters
             if (invalidCharactersFound === true) {
@@ -102,6 +117,11 @@ var TSOS;
             else {
                 return _Scheduler.loadNewProcess(program); // Pass to Scheduler to finish load and assign PID
             }
+        }
+        static hostUpdateDisplay() {
+            Control.hostUpdateDisplayCPU();
+            Control.hostUpdateDisplayMemory();
+            Control.hostUpdateDisplayProcesses();
         }
         static hostUpdateDisplayCPU() {
             var CPUElement = document.getElementById("displayCPU");
@@ -174,6 +194,7 @@ var TSOS;
             // .. and call the OS Kernel Bootstrap routine.
             _Kernel = new TSOS.Kernel();
             _Kernel.krnBootstrap(); // _GLaDOS.afterStartup() will get called in there, if configured.
+            Control.hostUpdateDisplay();
         }
         static hostBtnHaltOS_click(btn) {
             Control.hostLog("Emergency halt", "host");
@@ -204,5 +225,6 @@ var TSOS;
             }
         }
     }
+    Control.hostLogHistory = [];
     TSOS.Control = Control;
 })(TSOS || (TSOS = {}));

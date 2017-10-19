@@ -19,7 +19,7 @@ module TSOS {
             if (segment < 0 || // Before first segment
                 segment > SEGMENT_COUNT-1 || // After last segment
                 logicalAddress < 0x0 || // Before first addressable address
-                logicalAddress+size >= SEGMENT_SIZE) { // Past last addressable address
+                logicalAddress+size > SEGMENT_SIZE) { // Past last addressable address
                 // Memory access violation found; throw shit fit
                 _CPU.isExecuting = false;
                 _KernelInterruptQueue.enqueue(new Interrupt(MEMORY_ACCESS_VIOLATION_IRQ, _CPU.pid));
