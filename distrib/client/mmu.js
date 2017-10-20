@@ -19,11 +19,13 @@ var TSOS;
                 logicalAddress < 0x0 ||
                 logicalAddress + size > SEGMENT_SIZE) {
                 // Memory access violation found; throw shit fit
-                _CPU.isExecuting = false;
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(MEMORY_ACCESS_VIOLATION_IRQ, _CPU.pid));
                 return false;
             }
             return true; // Passes tests
+        }
+        static getPhysicalAddress(segment, logicalAddress) {
+            return logicalAddress + (segment * SEGMENT_SIZE);
         }
         static setByteAtLogicalAddress(segment, logicalAddress, byte) {
             Mmu.setBytesAtLogicalAddress(segment, logicalAddress, [byte]);
@@ -32,7 +34,7 @@ var TSOS;
             if (Mmu.isValidMemoryAccess(segment, logicalAddress, bytes.length) === false) {
                 return;
             }
-            _Memory.setBytes(logicalAddress + (segment * SEGMENT_SIZE), bytes);
+            _Memory.setBytes(Mmu.getPhysicalAddress(segment, logicalAddress), bytes);
         }
         static getByteAtLogicalAddress(segment, logicalAddress) {
             return Mmu.getBytesAtLogicalAddress(segment, logicalAddress, 1)[0];
@@ -41,10 +43,10 @@ var TSOS;
             if (Mmu.isValidMemoryAccess(segment, logicalAddress, size) === false) {
                 return [0];
             }
-            return _Memory.getBytes(logicalAddress + (segment * SEGMENT_SIZE), size);
+            return _Memory.getBytes(Mmu.getPhysicalAddress(segment, logicalAddress), size);
         }
         static zeroBytesInSegment(segment) {
-            _Memory.zeroBytes((segment * SEGMENT_SIZE), SEGMENT_SIZE);
+            _Memory.zeroBytes(Mmu.getPhysicalAddress(segment, 0), SEGMENT_SIZE);
         }
         static determineSegment() {
             // Find first empty segment (where index of segment status === false)

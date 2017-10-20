@@ -27,6 +27,8 @@ module TSOS {
 
     export class Control {
         public static hostLogHistory: {clock: number, source: string, msg: string, now: string}[] = [];
+        public static opCodeOperatorIndex: number = -1;
+        public static opCodeOperandIndices: number[] = [];
 
         public static hostInit(): void {
             // This is called from index.html's onLoad event via the onDocumentLoad function pointer.
@@ -155,16 +157,26 @@ module TSOS {
         public static hostUpdateDisplayMemory(): void {
             var memoryElement = <HTMLInputElement> document.getElementById("displayMemory");
             var memory = _Memory.getBytes(0, SEGMENT_SIZE*SEGMENT_COUNT);
-            var memoryData = "<table style='table-layout:fixed; width: 100%; text-align: center;'><tbody>";
-            for (var i = 0; i < SEGMENT_SIZE*SEGMENT_COUNT; i += 8) {
-                memoryData += "<tr><td style='font-weight: bold'>0x" + Utils.toHex(i, 3) + "</td>" +
-                    "<td align='right'>" + Utils.toHex(memory[i]) + "</td><td align='right'>" + Utils.toHex(memory[i+1]) + "</td>" +
-                    "<td align='right'>" + Utils.toHex(memory[i+2]) + "</td><td align='right'>" + Utils.toHex(memory[i+3]) + "</td>" +
-                    "<td align='right'>" + Utils.toHex(memory[i+4]) + "</td><td align='right'>" + Utils.toHex(memory[i+5]) + "</td>" +
-                    "<td align='right'>" + Utils.toHex(memory[i+6]) + "</td><td align='right'>" + Utils.toHex(memory[i+7]) + "</td></tr>";
+            var memoryData = "<table style='width: 100%;'><tbody>";
+            for (var i = 0; i < SEGMENT_SIZE*SEGMENT_COUNT; i++) {
+                if ((i%8) == 0) { memoryData += `<tr><td style="font-weight: bold;">0x${Utils.toHex(i, 3)}</td>`; }
+                // Compare i with operator and operand indices. Apply appropriate id for highlighting
+                var id = "";
+                if (_CPU.pid !== -1 && i === Control.opCodeOperatorIndex) {
+                    id = " id='operatorHighlight'";
+                } else if (_CPU.pid !== -1 && Control.opCodeOperandIndices.includes(i)) {
+                    id = " id='operandHighlight'";
+                }
+                memoryData += `<td${id}>${Utils.toHex(memory[i])}</td>`; // id used for highlighting
+                if ((i%8) == 7) { memoryData += "</tr>"; }
             }
             memoryData += "</tbody></table>";
             memoryElement.innerHTML = memoryData;
+            // Scroll to highlighted operand, if exists
+            var operandHighlightElement = <HTMLTableCellElement> document.getElementById("operatorHighlight");
+            if (operandHighlightElement !== null) {
+                operandHighlightElement.scrollIntoView(true);
+            }
         }
 
         public static hostUpdateDisplayProcesses(): void {
@@ -176,12 +188,7 @@ module TSOS {
             } else {
                 for (var i = 0; i < processes.length; i++) {
                     var process = processes[i];
-                    var state = "";
-                    if (process.isExecuting === true) {
-                        state = "Executing";
-                    } else {
-                        state = _CPU.isExecuting === true ? "Waiting" : "Ready";
-                    }
+                    var state = process.isExecuting === true ? "Executing" : "Ready";
                     var location = process.segment !== -1 ? "Memory" : "Disk";
                     processData += `<tr><td>${process.pid}</td><td>${Utils.toHex(process.PC)}</td><td>${Utils.toHex(process.Acc)}</td>` +
                         `<td>${Utils.toHex(process.Xreg)}</td><td>${Utils.toHex(process.Yreg)}</td><td>${process.Zflag}</td>` +
@@ -199,9 +206,10 @@ module TSOS {
             // Disable the (passed-in) start button...
             btn.disabled = true;
 
-            // .. enable the Halt and Reset buttons ...
+            // .. enable the Halt, Reset, and Toggle Single Step Mode buttons ...
             (<HTMLButtonElement>document.getElementById("btnHaltOS")).disabled = false;
             (<HTMLButtonElement>document.getElementById("btnReset")).disabled = false;
+            (<HTMLButtonElement>document.getElementById("btnToggleSingleStepMode")).disabled = false;
 
             // .. set focus on the OS console display ...
             document.getElementById("display").focus();
@@ -245,7 +253,8 @@ module TSOS {
         public static hostBtnToggle_Single_Step_Mode(btn): void {
             _SSMode = !_SSMode;
             btn.value = "Single Step: " + (_SSMode === true ? "On" : "Off");
-            if (_Scheduler.residentList[_CPU.pid].isExecuting === true) {
+            (<HTMLButtonElement>document.getElementById("btnSingleStepCPU")).disabled = !_SSMode;
+            if (_CPU.pid !== -1) {
                 _CPU.isExecuting = true;
             }
         }

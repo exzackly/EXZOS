@@ -58,6 +58,16 @@ h3 {
     width: 372px;
 }
 
+#operatorHighlight {
+    color: red;
+    font-weight: bold;
+}
+
+#operandHighlight {
+    color: blue;
+    font-weight: bold;
+}
+
 .container {
     display:flex;
     flex-wrap:wrap;

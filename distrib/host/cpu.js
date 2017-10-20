@@ -45,27 +45,38 @@ var TSOS;
         cycle() {
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.
-            //fetch
+            // Fetch
             var opCodeByte = TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC);
             this.PC += 1;
-            //decode
+            // Decode
             var opCode = this.opCodeMap[opCodeByte];
             if (opCode === undefined) {
-                //todo: print error
-                console.log("err" + opCodeByte);
+                _KernelInterruptQueue.enqueue(new TSOS.Interrupt(INVALID_OPCODE_IRQ, this.pid));
+                return;
             }
-            //execute
+            // Pass Control highlight indices
+            TSOS.Control.opCodeOperatorIndex = TSOS.Mmu.getPhysicalAddress(this.segment, this.PC);
+            TSOS.Control.opCodeOperandIndices = [];
+            for (var i = 0; i < opCode.operandSize; i++) {
+                TSOS.Control.opCodeOperandIndices.push(TSOS.Mmu.getPhysicalAddress(this.segment, this.PC + i + 1));
+            }
+            // Execute
             opCode.fn.call(this);
-            //todo: comment
             this.PC += opCode.operandSize;
-            this.updatePCB(_Scheduler.residentList[this.pid]);
+            // Update PCB, check single step mode, and update display
+            this.storeProcess(_Scheduler.residentList[this.pid]);
             if (_SSMode === true) {
                 this.isExecuting = false;
             }
             TSOS.Control.hostUpdateDisplay();
         }
         storeProcess(pcb) {
-            return pcb;
+            pcb.PC = this.PC;
+            pcb.Acc = this.Acc;
+            pcb.Xreg = this.Xreg;
+            pcb.Yreg = this.Yreg;
+            pcb.Zflag = this.Zflag;
+            pcb.isExecuting = this.isExecuting;
         }
         loadProcess(pcb) {
             this.pid = pcb.pid;
@@ -144,7 +155,6 @@ var TSOS;
             return;
         }
         brk() {
-            this.isExecuting = false;
             _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROGRAM_IRQ, this.pid));
         }
         compareMemoryWithXReg() {
@@ -208,14 +218,6 @@ var TSOS;
         getBytesAtNextAddress(location) {
             var address = this.getNextAddress(location);
             return TSOS.Mmu.getByteAtLogicalAddress(this.segment, address);
-        }
-        updatePCB(pcb) {
-            pcb.PC = this.PC;
-            pcb.Acc = this.Acc;
-            pcb.Xreg = this.Xreg;
-            pcb.Yreg = this.Yreg;
-            pcb.Zflag = this.Zflag;
-            pcb.isExecuting = this.isExecuting;
         }
     }
     TSOS.Cpu = Cpu;

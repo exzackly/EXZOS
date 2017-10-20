@@ -41,6 +41,7 @@ var TSOS;
             return pid;
         }
         terminateProcess(pid) {
+            _CPU.isExecuting = false;
             _CPU.pid = -1;
             var segment = this.residentList[pid].segment;
             TSOS.Mmu.segmentStatus[segment] = false; // Clear up segment for reuse

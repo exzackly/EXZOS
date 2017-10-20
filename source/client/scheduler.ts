@@ -50,6 +50,7 @@ module TSOS {
         }
 
         public terminateProcess(pid: number): void {
+            _CPU.isExecuting = false;
             _CPU.pid = -1;
             var segment = this.residentList[pid].segment;
             Mmu.segmentStatus[segment] = false; // Clear up segment for reuse

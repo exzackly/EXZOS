@@ -141,9 +141,16 @@ module TSOS {
                     _StdOut.advanceLine();
                     _OsShell.putPrompt();
                     break;
+                case INVALID_OPCODE_IRQ:
+                    _StdOut.advanceLine();
+                    _StdOut.putText("Invalid op code. PID " + params + " terminated.");
+                    _Scheduler.terminateProcess(params);
+                    _StdOut.advanceLine();
+                    _OsShell.putPrompt();
+                    break;
                 case MEMORY_ACCESS_VIOLATION_IRQ:
                     _StdOut.advanceLine();
-                    _StdOut.putText("Invalid memory access. Program terminated");
+                    _StdOut.putText("Invalid memory access. PID " + params + " terminated.");
                     _Scheduler.terminateProcess(params);
                     _StdOut.advanceLine();
                     _OsShell.putPrompt();

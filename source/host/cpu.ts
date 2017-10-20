@@ -32,31 +32,43 @@ module TSOS {
         public cycle(): void {
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.
-            //fetch
+
+            // Fetch
             var opCodeByte = Mmu.getByteAtLogicalAddress(this.segment, this.PC);
             this.PC += 1;
-            //decode
+
+            // Decode
             var opCode = this.opCodeMap[opCodeByte];
             if (opCode === undefined) {
-                //todo: print error
-                console.log("err" + opCodeByte);
+                _KernelInterruptQueue.enqueue(new Interrupt(INVALID_OPCODE_IRQ, this.pid));
+                return;
             }
-            //execute
+            // Pass Control highlight indices
+            Control.opCodeOperatorIndex = Mmu.getPhysicalAddress(this.segment, this.PC);
+            Control.opCodeOperandIndices = [];
+            for (var i = 0; i < opCode.operandSize; i++) { // Operands are variable length; grab all
+                Control.opCodeOperandIndices.push(Mmu.getPhysicalAddress(this.segment, this.PC+i+1));
+            }
+
+            // Execute
             opCode.fn.call(this);
-            //todo: comment
             this.PC += opCode.operandSize;
 
-            this.updatePCB(_Scheduler.residentList[this.pid]);
-
+            // Update PCB, check single step mode, and update display
+            this.storeProcess(_Scheduler.residentList[this.pid]);
             if (_SSMode === true) {
                 this.isExecuting = false;
             }
-
             Control.hostUpdateDisplay();
         }
 
-        public storeProcess(pcb: Pcb): Pcb {
-            return pcb;
+        public storeProcess(pcb: Pcb): void {
+            pcb.PC = this.PC;
+            pcb.Acc = this.Acc;
+            pcb.Xreg = this.Xreg;
+            pcb.Yreg = this.Yreg;
+            pcb.Zflag = this.Zflag;
+            pcb.isExecuting = this.isExecuting;
         }
 
         public loadProcess(pcb: Pcb) {
@@ -163,7 +175,6 @@ module TSOS {
         }
 
         public brk(): void {
-            this.isExecuting = false;
             _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROGRAM_IRQ, this.pid));
         }
 
@@ -232,14 +243,6 @@ module TSOS {
             return Mmu.getByteAtLogicalAddress(this.segment, address);
         }
 
-        public updatePCB(pcb: Pcb): void {
-            pcb.PC = this.PC;
-            pcb.Acc = this.Acc;
-            pcb.Xreg = this.Xreg;
-            pcb.Yreg = this.Yreg;
-            pcb.Zflag = this.Zflag;
-            pcb.isExecuting = this.isExecuting;
-        }
 
     }
 }

@@ -24,11 +24,14 @@ module TSOS {
                 logicalAddress < 0x0 || // Before first addressable address
                 logicalAddress+size > SEGMENT_SIZE) { // Past last addressable address
                 // Memory access violation found; throw shit fit
-                _CPU.isExecuting = false;
                 _KernelInterruptQueue.enqueue(new Interrupt(MEMORY_ACCESS_VIOLATION_IRQ, _CPU.pid));
                 return false;
             }
             return true; // Passes tests
+        }
+
+        public static getPhysicalAddress(segment: number, logicalAddress: number): number {
+            return logicalAddress+(segment*SEGMENT_SIZE);
         }
 
         public static setByteAtLogicalAddress(segment: number, logicalAddress: number, byte: number): void {
@@ -37,7 +40,7 @@ module TSOS {
 
         public static setBytesAtLogicalAddress(segment: number, logicalAddress: number, bytes: number[]): void {
             if (Mmu.isValidMemoryAccess(segment, logicalAddress, bytes.length) === false) { return; }
-            _Memory.setBytes(logicalAddress+(segment*SEGMENT_SIZE), bytes);
+            _Memory.setBytes(Mmu.getPhysicalAddress(segment, logicalAddress), bytes);
         }
 
         public static getByteAtLogicalAddress(segment: number, logicalAddress: number): number {
@@ -46,11 +49,11 @@ module TSOS {
 
         public static getBytesAtLogicalAddress(segment: number, logicalAddress: number, size: number): number[] {
             if (Mmu.isValidMemoryAccess(segment, logicalAddress, size) === false) { return [0]; }
-            return _Memory.getBytes(logicalAddress+(segment*SEGMENT_SIZE), size);
+            return _Memory.getBytes(Mmu.getPhysicalAddress(segment, logicalAddress), size);
         }
 
         public static zeroBytesInSegment(segment: number): void {
-            _Memory.zeroBytes((segment*SEGMENT_SIZE), SEGMENT_SIZE);
+            _Memory.zeroBytes(Mmu.getPhysicalAddress(segment, 0), SEGMENT_SIZE);
         }
 
         public static determineSegment(): number {
