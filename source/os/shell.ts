@@ -39,7 +39,8 @@ module TSOS {
             "load": {desc: "- Loads program from User Program Input.", fn: this.shellLoad},
             "run": {desc: "<pid> - Runs program with specified PID.", fn: this.shellRun},
             "ps": {desc: "- Displays a list of the running processes and their IDs.", fn: this.shellPs},
-            "kill": {desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill}
+            "kill": {desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill},
+            "clearmem": {desc: "Clears all memory partitions.", fn: this.shellClearMem}
         }
 
         public putPrompt() {
@@ -266,16 +267,21 @@ module TSOS {
 
         public shellKill(args) {
             if (args.length > 0) {
-                if (_Scheduler.getProcessForPid(args[0]) !== undefined) {
-                    _StdOut.putText("PID " + args[0] + " killed.");
-                    _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROGRAM_IRQ, args[0]));
+                var pid = parseInt(args[0]);
+                if (_Scheduler.getProcessForPid(pid) !== null) {
+                    _StdOut.putText("PID " + pid + " killed.");
+                    _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROGRAM_IRQ, pid));
                 } else {
                     _StdOut.putText("PID " + args[0] + " not found. Please supply a valid PID.");
                 }
             } else {
                 _StdOut.putText("Usage: kill <PID>  Please supply a valid PID.");
             }
+        }
 
+        public shellClearMem(args) {
+            Mmu.zeroMemory();
+            _StdOut.putText("All memory partitions cleared.");
         }
 
     }

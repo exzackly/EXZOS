@@ -15,8 +15,8 @@ module TSOS {
 
     export class Mmu {
 
-        // Used to keep track of the status of each segment. False indicates that segment is empty
-        public static segmentStatus: boolean[] = Array(SEGMENT_COUNT).fill(false); // Initialize segments with unused (false) state
+        // Used to keep track of the PID of the process in each segment. -1 indicates that segment is empty
+        public static segmentStatus: number[] = Array(SEGMENT_COUNT).fill(-1); // Initialize segments with unused (-1) state
         public static pidIncrementor: number = 0;
 
         public static isValidMemoryAccess(logicalAddress: number, size: number, base: number, limit: number): boolean {
@@ -56,16 +56,25 @@ module TSOS {
             _Memory.zeroBytes(base, limit-base);
         }
 
+        public static zeroMemory(): void {
+            for (var i = 0; i < Mmu.segmentStatus.length; i++) { // Kill processes in all segments
+                if (Mmu.segmentStatus[i] !== -1) { // PID -1 indicates segment empty
+                    _Scheduler.terminateProcess(Mmu.segmentStatus[i]);
+                }
+            }
+            _Memory.zeroBytes(0, SEGMENT_SIZE*SEGMENT_COUNT);
+        }
+
         public static createNewProcess(prog: string): number {
             // Create PCB for new process
-            var base = Mmu.determineBase(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor
+            var pid = this.pidIncrementor;
+            var base = Mmu.determineBase(pid);
             if (base === -1) { // Empty segment not found
                 //todo: load to memory in project 4
                 return -2; // Return value of -2 denotes insufficient memory
             }
-            var limit = base+SEGMENT_SIZE;
-            var pid = this.pidIncrementor;
             this.pidIncrementor += 1; // Increment for next process
+            var limit = base+SEGMENT_SIZE;
             var priority = 0;
             //todo: support variable priority in project 3
             _Scheduler.residentList.push(new Pcb(pid, base, limit, priority));
@@ -82,11 +91,11 @@ module TSOS {
             return pid;
         }
 
-        public static determineBase(): number {
+        public static determineBase(pid: number): number {
             // Find first empty segment (where index of segment status === false)
             for (var i = 0; i < Mmu.segmentStatus.length; i++) {
-                if (Mmu.segmentStatus[i] === false) {
-                    Mmu.segmentStatus[i] = true;
+                if (Mmu.segmentStatus[i] === -1) {
+                    Mmu.segmentStatus[i] = pid;
                     return i*SEGMENT_SIZE;
                 }
             }
@@ -96,7 +105,7 @@ module TSOS {
         public static terminateProcess(pcb: Pcb): void {
             Mmu.zeroBytesWithBaseandLimit(pcb.base, pcb.limit); // Remove program from memory
             var segment = Math.floor(pcb.base/SEGMENT_SIZE);
-            Mmu.segmentStatus[segment] = false; // Clear up segment for reuse
+            Mmu.segmentStatus[segment] = -1; // Clear up segment for reuse
         }
 
     }
