@@ -11,11 +11,6 @@
     <!-- Globals CONSTANTS and _Variables. Must included be first. -->
     <script type="text/javascript" src="distrib/globals.js"></script>
 
-    <!-- Client Routines -->
-    <script type="text/javascript" src="distrib/client/mmu.js"></script>
-    <script type="text/javascript" src="distrib/client/pcb.js"></script>
-    <script type="text/javascript" src="distrib/client/scheduler.js"></script>
-
     <!-- Host (Virtual Machine / Hardware Simulation) Routines -->
     <script type="text/javascript" src="distrib/host/control.js"></script>
     <script type="text/javascript" src="distrib/host/devices.js"></script>
@@ -23,6 +18,9 @@
     <script type="text/javascript" src="distrib/host/memory.js"></script>
 
     <!-- Virtual OS Routines: Make sure Kernel code is last, since it needs those above it. -->
+    <script type="text/javascript" src="distrib/os/mmu.js"></script>
+    <script type="text/javascript" src="distrib/os/pcb.js"></script>
+    <script type="text/javascript" src="distrib/os/scheduler.js"></script>
     <script type="text/javascript" src="distrib/os/interrupt.js"></script>
     <script type="text/javascript" src="distrib/os/canvastext.js"></script>
     <script type="text/javascript" src="distrib/os/console.js"></script>
@@ -37,7 +35,7 @@
     <!-- Other Routines -->
     <script type="text/javascript" src="distrib/utils.js"></script>
     <!-- Uncomment the line below to enable GLaDOS testing. -->
-    <script type="text/javascript" src="http://alanclasses.github.io/TSOS/test/glados-ip2.js"></script>
+    <!--<script type="text/javascript" src="http://alanclasses.github.io/TSOS/test/glados-ip2.js"></script>-->
 
 </head>
 
