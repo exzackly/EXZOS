@@ -13,50 +13,55 @@
 var TSOS;
 (function (TSOS) {
     class Mmu {
-        static isValidMemoryAccess(segment, logicalAddress, size) {
-            if (segment < 0 ||
-                segment > SEGMENT_COUNT - 1 ||
-                logicalAddress < 0x0 ||
-                logicalAddress + size > SEGMENT_SIZE) {
+        static isValidMemoryAccess(logicalAddress, size, base, limit) {
+            if ((logicalAddress < 0x0) ||
+                (Mmu.getPhysicalAddress(logicalAddress, base) >= limit) ||
+                (Mmu.getPhysicalAddress(logicalAddress, base) + size > limit)) {
                 // Memory access violation found; throw shit fit
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(MEMORY_ACCESS_VIOLATION_IRQ, _CPU.pid));
                 return false;
             }
             return true; // Passes tests
         }
-        static getPhysicalAddress(segment, logicalAddress) {
-            return logicalAddress + (segment * SEGMENT_SIZE);
+        static getPhysicalAddress(logicalAddress, base) {
+            return base + logicalAddress;
         }
-        static setByteAtLogicalAddress(segment, logicalAddress, byte) {
-            Mmu.setBytesAtLogicalAddress(segment, logicalAddress, [byte]);
+        static setByteAtLogicalAddress(logicalAddress, byte, base, limit) {
+            Mmu.setBytesAtLogicalAddress(logicalAddress, [byte], base, limit);
         }
-        static setBytesAtLogicalAddress(segment, logicalAddress, bytes) {
-            if (Mmu.isValidMemoryAccess(segment, logicalAddress, bytes.length) === false) {
+        static setBytesAtLogicalAddress(logicalAddress, bytes, base, limit) {
+            if (Mmu.isValidMemoryAccess(logicalAddress, bytes.length, base, limit) === false) {
                 return;
             }
-            _Memory.setBytes(Mmu.getPhysicalAddress(segment, logicalAddress), bytes);
+            _Memory.setBytes(Mmu.getPhysicalAddress(logicalAddress, base), bytes);
         }
-        static getByteAtLogicalAddress(segment, logicalAddress) {
-            return Mmu.getBytesAtLogicalAddress(segment, logicalAddress, 1)[0];
+        static getByteAtLogicalAddress(logicalAddress, base, limit) {
+            return Mmu.getBytesAtLogicalAddress(logicalAddress, 1, base, limit)[0];
         }
-        static getBytesAtLogicalAddress(segment, logicalAddress, size) {
-            if (Mmu.isValidMemoryAccess(segment, logicalAddress, size) === false) {
+        static getBytesAtLogicalAddress(logicalAddress, size, base, limit) {
+            if (Mmu.isValidMemoryAccess(logicalAddress, size, base, limit) === false) {
                 return [0];
             }
-            return _Memory.getBytes(Mmu.getPhysicalAddress(segment, logicalAddress), size);
+            return _Memory.getBytes(Mmu.getPhysicalAddress(logicalAddress, base), size);
         }
-        static zeroBytesInSegment(segment) {
-            _Memory.zeroBytes(Mmu.getPhysicalAddress(segment, 0), SEGMENT_SIZE);
+        static zeroBytesWithBaseandLimit(base, limit) {
+            _Memory.zeroBytes(base, limit - base);
         }
-        static determineSegment() {
+        static determineBase() {
             // Find first empty segment (where index of segment status === false)
             for (var i = 0; i < Mmu.segmentStatus.length; i++) {
                 if (Mmu.segmentStatus[i] === false) {
                     Mmu.segmentStatus[i] = true;
-                    return i;
+                    return i * SEGMENT_SIZE;
                 }
             }
             return -1; // Empty segment not found
+        }
+        static terminateProcess(pcb) {
+            Mmu.zeroBytesWithBaseandLimit(pcb.base, pcb.limit); // Remove program from memory
+            var segment = Math.floor(pcb.base / SEGMENT_SIZE);
+            console.log("Segment is " + segment);
+            Mmu.segmentStatus[segment] = false; // Clear up segment for reuse
         }
     }
     // Used to keep track of the status of each segment. False indicates that segment is empty

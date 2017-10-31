@@ -240,7 +240,7 @@ var TSOS;
             var processes = _Scheduler.getRunningProcesses();
             for (var i = 0; i < processes.length; i++) {
                 var process = processes[i];
-                var location = process.segment !== -1 ? "Memory" : "Disk";
+                var location = process.base !== -1 ? "Memory" : "Disk";
                 _StdOut.putText(process.pid + " " + location);
                 _StdOut.advanceLine();
             }

@@ -189,7 +189,7 @@ module TSOS {
                 for (var i = 0; i < processes.length; i++) {
                     var process = processes[i];
                     var state = process.isExecuting === true ? "Executing" : "Ready";
-                    var location = process.segment !== -1 ? "Memory" : "Disk";
+                    var location = process.base !== -1 ? "Memory" : "Disk";
                     processData += `<tr><td>${process.pid}</td><td>${Utils.toHex(process.PC)}</td><td>${Utils.toHex(process.Acc)}</td>` +
                         `<td>${Utils.toHex(process.Xreg)}</td><td>${Utils.toHex(process.Yreg)}</td><td>${process.Zflag}</td>` +
                         `<td>${process.priority}</td><td>${state}</td><td>${location}</td></tr>`;

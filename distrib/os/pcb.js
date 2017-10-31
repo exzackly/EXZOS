@@ -8,9 +8,10 @@
 var TSOS;
 (function (TSOS) {
     class Pcb {
-        constructor(pid, segment, priority, PC = 0, Acc = 0, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false) {
+        constructor(pid, base, limit, priority, PC = 0, Acc = 0, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false) {
             this.pid = pid;
-            this.segment = segment;
+            this.base = base;
+            this.limit = limit;
             this.priority = priority;
             this.PC = PC;
             this.Acc = Acc;

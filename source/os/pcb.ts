@@ -12,7 +12,8 @@ module TSOS {
     export class Pcb {
 
         constructor(public pid: number,
-                    public segment: number,
+                    public base: number,
+                    public limit: number,
                     public priority: number,
                     public PC: number = 0,
                     public Acc: number = 0,

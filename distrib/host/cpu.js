@@ -16,9 +16,10 @@
 var TSOS;
 (function (TSOS) {
     class Cpu {
-        constructor(pid = -1, segment = -1, PC = 0, Acc = 0, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false) {
+        constructor(pid = -1, base = -1, limit = -1, PC = 0, Acc = 0, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false) {
             this.pid = pid;
-            this.segment = segment;
+            this.base = base;
+            this.limit = limit;
             this.PC = PC;
             this.Acc = Acc;
             this.Xreg = Xreg;
@@ -46,7 +47,7 @@ var TSOS;
             _Kernel.krnTrace('CPU cycle');
             // TODO: Accumulate CPU usage and profiling statistics here.
             // Fetch
-            var opCodeByte = TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC);
+            var opCodeByte = TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
             this.PC += 1;
             // Decode
             var opCode = this.opCodeMap[opCodeByte];
@@ -55,10 +56,10 @@ var TSOS;
                 return;
             }
             // Pass Control highlight indices
-            TSOS.Control.opCodeOperatorIndex = TSOS.Mmu.getPhysicalAddress(this.segment, this.PC);
+            TSOS.Control.opCodeOperatorIndex = TSOS.Mmu.getPhysicalAddress(this.PC, this.base);
             TSOS.Control.opCodeOperandIndices = [];
             for (var i = 0; i < opCode.operandSize; i++) {
-                TSOS.Control.opCodeOperandIndices.push(TSOS.Mmu.getPhysicalAddress(this.segment, this.PC + i + 1));
+                TSOS.Control.opCodeOperandIndices.push(TSOS.Mmu.getPhysicalAddress(this.PC + i + 1, this.base));
             }
             // Execute
             opCode.fn.call(this);
@@ -71,6 +72,7 @@ var TSOS;
             TSOS.Control.hostUpdateDisplay();
         }
         storeProcess(pcb) {
+            // pid, base, and limit will not change
             pcb.PC = this.PC;
             pcb.Acc = this.Acc;
             pcb.Xreg = this.Xreg;
@@ -80,21 +82,25 @@ var TSOS;
         }
         loadProcess(pcb) {
             this.pid = pcb.pid;
-            this.segment = pcb.segment;
+            this.base = pcb.base;
+            this.limit = pcb.limit;
             this.PC = pcb.PC;
             this.Acc = pcb.Acc;
             this.Xreg = pcb.Xreg;
             this.Yreg = pcb.Yreg;
             this.Zflag = pcb.Zflag;
             this.isExecuting = true;
-            TSOS.Control.hostUpdateDisplay();
+        }
+        terminateProcess() {
+            this.isExecuting = false;
+            this.pid = -1;
         }
         loadAccumulatorWithConstant() {
             /*
             A9 02 00 00
             Acc should be 02
              */
-            this.Acc = TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC);
+            this.Acc = TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
         }
         loadAccumulatorFromMemory() {
             /*
@@ -109,7 +115,7 @@ var TSOS;
             0x07 should be 04
              */
             var loc = this.getNextAddress(this.PC);
-            TSOS.Mmu.setByteAtLogicalAddress(this.segment, loc, this.Acc);
+            TSOS.Mmu.setByteAtLogicalAddress(loc, this.Acc, this.base, this.limit);
         }
         addWithCarry() {
             /*
@@ -124,7 +130,7 @@ var TSOS;
             A2 05 00 00
             Xreg should be 05
              */
-            this.Xreg = TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC);
+            this.Xreg = TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
         }
         loadXRegFromMemory() {
             /*
@@ -138,7 +144,7 @@ var TSOS;
             A0 07 00 00
             Yreg should be 07
              */
-            this.Yreg = TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC);
+            this.Yreg = TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
         }
         loadYRegFromMemory() {
             /*
@@ -169,11 +175,9 @@ var TSOS;
             /*
             D0 02 A9 07 00 00
             Acc should be 00
-
-
              */
             if (this.Zflag === 0) {
-                this.PC = (this.PC + TSOS.Mmu.getByteAtLogicalAddress(this.segment, this.PC)) % SEGMENT_SIZE;
+                this.PC = (this.PC + TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit)) % SEGMENT_SIZE;
             }
         }
         incrementByte() {
@@ -183,7 +187,7 @@ var TSOS;
              */
             var loc = this.getNextAddress(this.PC);
             var value = this.getBytesAtNextAddress(this.PC);
-            TSOS.Mmu.setByteAtLogicalAddress(this.segment, loc, value + 1);
+            TSOS.Mmu.setByteAtLogicalAddress(loc, value + 1, this.base, this.limit);
         }
         systemCall() {
             /*
@@ -197,7 +201,7 @@ var TSOS;
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(SYSCALL_IRQ, this.Yreg.toString()));
             }
             else if (this.Xreg == 0x2) {
-                var memory = TSOS.Mmu.getBytesAtLogicalAddress(this.segment, this.Yreg, SEGMENT_SIZE - this.Yreg - 1);
+                var memory = TSOS.Mmu.getBytesAtLogicalAddress(this.Yreg, SEGMENT_SIZE - this.Yreg - 1, this.base, this.limit);
                 var output = "";
                 for (var i = 0; i < memory.length; i++) {
                     if (memory[i] === 0x0) {
@@ -209,7 +213,7 @@ var TSOS;
             }
         }
         getNextAddress(location) {
-            var address = TSOS.Mmu.getBytesAtLogicalAddress(this.segment, location, 2); // todo: Replace magic number?
+            var address = TSOS.Mmu.getBytesAtLogicalAddress(location, 2, this.base, this.limit); // todo: Replace magic number?
             // Regarding Kernighan's law: just get it right the first time and you won't ever have to debug
             // If you can't inherently understand this just by looking at it, you really need to ask yourself if you belong here /s
             // Seriously though look up reduce, it can do a lot of cool shit
@@ -217,7 +221,7 @@ var TSOS;
         }
         getBytesAtNextAddress(location) {
             var address = this.getNextAddress(location);
-            return TSOS.Mmu.getByteAtLogicalAddress(this.segment, address);
+            return TSOS.Mmu.getByteAtLogicalAddress(address, this.base, this.limit);
         }
     }
     TSOS.Cpu = Cpu;
