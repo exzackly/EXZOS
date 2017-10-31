@@ -115,7 +115,7 @@ var TSOS;
                 return -1; // Return value of -1 denotes invalid program
             }
             else {
-                return _Scheduler.loadNewProcess(program); // Pass to Scheduler to finish load and assign PID
+                return TSOS.Mmu.createNewProcess(program); // Pass to Scheduler to finish load and assign PID
             }
         }
         static hostUpdateDisplay() {

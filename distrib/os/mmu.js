@@ -47,6 +47,27 @@ var TSOS;
         static zeroBytesWithBaseandLimit(base, limit) {
             _Memory.zeroBytes(base, limit - base);
         }
+        static createNewProcess(prog) {
+            // Create PCB for new process
+            var base = Mmu.determineBase(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor
+            if (base === -1) {
+                //todo: load to memory in project 4
+                return -2; // Return value of -2 denotes insufficient memory
+            }
+            var limit = base + SEGMENT_SIZE;
+            var pid = this.pidIncrementor;
+            this.pidIncrementor += 1; // Increment for next process
+            var priority = 0;
+            //todo: support variable priority in project 3
+            _Scheduler.residentList.push(new TSOS.Pcb(pid, base, limit, priority));
+            // Load program into memory
+            var progArray = prog.match(/.{2}/g); // Break program into array of length 2 hex codes
+            var program = progArray.map(x => TSOS.Utils.fromHex(x)); // Convert program from hex to decimal
+            Mmu.zeroBytesWithBaseandLimit(base, limit); // Zero memory
+            Mmu.setBytesAtLogicalAddress(0, program, base, limit); // Load program into memory segment
+            TSOS.Control.hostUpdateDisplay(); // Update display
+            return pid;
+        }
         static determineBase() {
             // Find first empty segment (where index of segment status === false)
             for (var i = 0; i < Mmu.segmentStatus.length; i++) {
@@ -65,5 +86,6 @@ var TSOS;
     }
     // Used to keep track of the status of each segment. False indicates that segment is empty
     Mmu.segmentStatus = Array(SEGMENT_COUNT).fill(false); // Initialize segments with unused (false) state
+    Mmu.pidIncrementor = 0;
     TSOS.Mmu = Mmu;
 })(TSOS || (TSOS = {}));

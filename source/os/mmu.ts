@@ -17,6 +17,7 @@ module TSOS {
 
         // Used to keep track of the status of each segment. False indicates that segment is empty
         public static segmentStatus: boolean[] = Array(SEGMENT_COUNT).fill(false); // Initialize segments with unused (false) state
+        public static pidIncrementor: number = 0;
 
         public static isValidMemoryAccess(logicalAddress: number, size: number, base: number, limit: number): boolean {
             if ((logicalAddress < 0x0) || // Before first addressable address
@@ -53,6 +54,32 @@ module TSOS {
 
         public static zeroBytesWithBaseandLimit(base: number, limit: number): void {
             _Memory.zeroBytes(base, limit-base);
+        }
+
+        public static createNewProcess(prog: string): number {
+            // Create PCB for new process
+            var base = Mmu.determineBase(); // Segment determined first to ensure sufficient space before incrementing pidIncrementor
+            if (base === -1) { // Empty segment not found
+                //todo: load to memory in project 4
+                return -2; // Return value of -2 denotes insufficient memory
+            }
+            var limit = base+SEGMENT_SIZE;
+            var pid = this.pidIncrementor;
+            this.pidIncrementor += 1; // Increment for next process
+            var priority = 0;
+            //todo: support variable priority in project 3
+            _Scheduler.residentList.push(new Pcb(pid, base, limit, priority));
+
+            // Load program into memory
+            var progArray = prog.match(/.{2}/g); // Break program into array of length 2 hex codes
+            var program = progArray.map(x => Utils.fromHex(x)); // Convert program from hex to decimal
+
+            Mmu.zeroBytesWithBaseandLimit(base, limit); // Zero memory
+            Mmu.setBytesAtLogicalAddress(0, program, base, limit); // Load program into memory segment
+
+            Control.hostUpdateDisplay(); // Update display
+
+            return pid;
         }
 
         public static determineBase(): number {

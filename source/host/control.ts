@@ -134,7 +134,7 @@ module TSOS {
             if (invalidCharactersFound === true) {
                 return -1; // Return value of -1 denotes invalid program
             } else {
-                return _Scheduler.loadNewProcess(program); // Pass to Scheduler to finish load and assign PID
+                return Mmu.createNewProcess(program); // Pass to Scheduler to finish load and assign PID
             }
         }
 
