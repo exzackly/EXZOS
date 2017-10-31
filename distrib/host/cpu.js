@@ -65,7 +65,7 @@ var TSOS;
             opCode.fn.call(this);
             this.PC += opCode.operandSize;
             // Update PCB, check single step mode, and update display
-            this.storeProcess(_Scheduler.residentList[this.pid]);
+            this.storeProcess(_Scheduler.getProcessForPid(this.pid));
             if (_SSMode === true) {
                 this.isExecuting = false;
             }

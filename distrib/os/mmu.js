@@ -60,7 +60,6 @@ var TSOS;
         static terminateProcess(pcb) {
             Mmu.zeroBytesWithBaseandLimit(pcb.base, pcb.limit); // Remove program from memory
             var segment = Math.floor(pcb.base / SEGMENT_SIZE);
-            console.log("Segment is " + segment);
             Mmu.segmentStatus[segment] = false; // Clear up segment for reuse
         }
     }

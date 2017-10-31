@@ -12,13 +12,11 @@
 var TSOS;
 (function (TSOS) {
     class Scheduler {
-        constructor(residentList = {}, pidIncrementor = 0) {
+        constructor(residentList = [], readyQueue = [], // ready queue contains PID values; PCBs stored in resident list
+            pidIncrementor = 0) {
             this.residentList = residentList;
+            this.readyQueue = readyQueue;
             this.pidIncrementor = pidIncrementor;
-        }
-        getRunningProcesses() {
-            var PIDs = Object.keys(_Scheduler.residentList);
-            return PIDs.map(x => this.residentList[x]);
         }
         loadNewProcess(prog) {
             // Create PCB for new process
@@ -32,9 +30,7 @@ var TSOS;
             this.pidIncrementor += 1; // Increment for next process
             var priority = 0;
             //todo: support variable priority in project 3
-            console.log(base);
-            console.log(limit);
-            this.residentList[pid] = new TSOS.Pcb(pid, base, limit, priority);
+            this.residentList.push(new TSOS.Pcb(pid, base, limit, priority));
             // Load program into memory
             var progArray = prog.match(/.{2}/g); // Break program into array of length 2 hex codes
             var program = progArray.map(x => TSOS.Utils.fromHex(x)); // Convert program from hex to decimal
@@ -45,17 +41,38 @@ var TSOS;
         }
         terminateProcess(pid) {
             _CPU.terminateProcess();
-            TSOS.Mmu.terminateProcess(this.residentList[pid]);
-            delete this.residentList[pid]; // Remove Pcb from resident list
+            TSOS.Mmu.terminateProcess(this.getProcessForPid(pid));
+            this.removeProcess(pid); // Remove process from resident list and ready queue
             TSOS.Control.hostUpdateDisplay(); // Update display
         }
         loadProcessOnCPU(pid) {
-            if (pid in this.residentList) {
-                _CPU.loadProcess(this.residentList[pid]);
+            var process = this.getProcessForPid(pid);
+            if (process !== null) {
+                _CPU.loadProcess(process);
                 TSOS.Control.hostUpdateDisplay();
                 return true;
             }
             return false;
+        }
+        getProcessForPid(pid) {
+            for (var i = 0; i < this.residentList.length; i++) {
+                if (this.residentList[i].pid === pid) {
+                    return this.residentList[i];
+                }
+            }
+            return null;
+        }
+        removeProcess(pid) {
+            for (var i = 0; i < this.readyQueue.length; i++) {
+                if (this.readyQueue[i] === pid) {
+                    this.readyQueue.splice(i, 1);
+                }
+            }
+            for (var i = 0; i < this.residentList.length; i++) {
+                if (this.residentList[i].pid === pid) {
+                    this.residentList.splice(i, 1);
+                }
+            }
         }
     }
     TSOS.Scheduler = Scheduler;

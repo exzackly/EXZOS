@@ -50,7 +50,7 @@ var TSOS;
         krnShutdown() {
             this.krnTrace("begin shutdown OS");
             // Terminate all running processes
-            var processes = _Scheduler.getRunningProcesses();
+            var processes = _Scheduler.residentList;
             for (var i = 0; i < processes.length; i++) {
                 _Scheduler.terminateProcess(processes[i].pid);
             }

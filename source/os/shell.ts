@@ -244,7 +244,8 @@ module TSOS {
 
         public shellRun(args) {
             if (args.length > 0) {
-                var isLoaded = _Scheduler.loadProcessOnCPU(args[0]);
+                var pid = parseInt(args[0]);
+                var isLoaded = _Scheduler.loadProcessOnCPU(pid);
                 if (!isLoaded) {
                     _StdOut.putText("PID " + args[0] + " not found. Please supply a valid PID.");
                 }
@@ -254,7 +255,7 @@ module TSOS {
         }
 
         public shellPs(args) {
-            var processes = _Scheduler.getRunningProcesses();
+            var processes = _Scheduler.residentList;
             for (var i = 0; i < processes.length; i++) {
                 var process = processes[i];
                 var location = process.base !== -1 ? "Memory" : "Disk";
@@ -265,7 +266,7 @@ module TSOS {
 
         public shellKill(args) {
             if (args.length > 0) {
-                if (_Scheduler.residentList[args[0]] !== undefined) {
+                if (_Scheduler.getProcessForPid(args[0]) !== undefined) {
                     _StdOut.putText("PID " + args[0] + " killed.");
                     _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROGRAM_IRQ, args[0]));
                 } else {

@@ -15,13 +15,9 @@ module TSOS {
 
     export class Scheduler {
 
-        constructor(public residentList: {[pid: number]: Pcb;} = {},
+        constructor(public residentList: Pcb[] = [],
+                    public readyQueue: number[] = [], // ready queue contains PID values; PCBs stored in resident list
                     public pidIncrementor: number = 0) {
-        }
-
-        public getRunningProcesses(): Pcb[] {
-            var PIDs = Object.keys(_Scheduler.residentList);
-            return PIDs.map(x => this.residentList[x]);
         }
 
         public loadNewProcess(prog: string): number {
@@ -36,9 +32,7 @@ module TSOS {
             this.pidIncrementor += 1; // Increment for next process
             var priority = 0;
             //todo: support variable priority in project 3
-            console.log(base);
-            console.log(limit);
-            this.residentList[pid] = new Pcb(pid, base, limit, priority);
+            this.residentList.push(new Pcb(pid, base, limit, priority));
 
             // Load program into memory
             var progArray = prog.match(/.{2}/g); // Break program into array of length 2 hex codes
@@ -54,19 +48,43 @@ module TSOS {
 
         public terminateProcess(pid: number): void {
             _CPU.terminateProcess();
-            Mmu.terminateProcess(this.residentList[pid]);
-            delete this.residentList[pid]; // Remove Pcb from resident list
+            Mmu.terminateProcess(this.getProcessForPid(pid));
+            this.removeProcess(pid); // Remove process from resident list and ready queue
             Control.hostUpdateDisplay(); // Update display
         }
 
         public loadProcessOnCPU(pid: number): boolean {
-            if (pid in this.residentList) {
-                _CPU.loadProcess(this.residentList[pid]);
+            var process = this.getProcessForPid(pid);
+            if (process !== null) {
+                _CPU.loadProcess(process);
                 Control.hostUpdateDisplay();
-               return true;
+                return true;
             }
             return false;
         }
+
+        public getProcessForPid(pid: number): Pcb {
+            for (var i = 0; i < this.residentList.length; i++) {
+                if (this.residentList[i].pid === pid) {
+                    return this.residentList[i];
+                }
+            }
+            return null;
+        }
+
+        public removeProcess(pid: number): void {
+            for (var i = 0; i < this.readyQueue.length; i++) {
+                if (this.readyQueue[i] === pid) {
+                    this.readyQueue.splice(i, 1);
+                }
+            }
+            for (var i = 0; i < this.residentList.length; i++) {
+                if (this.residentList[i].pid === pid) {
+                    this.residentList.splice(i, 1);
+                }
+            }
+        }
+
 
 
     }

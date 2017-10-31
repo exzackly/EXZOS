@@ -182,7 +182,7 @@ module TSOS {
         public static hostUpdateDisplayProcesses(): void {
             var processData = "<tbody><tr><th>PID</th><th>PC</th><th>ACC</th><th>X</th><th>Y</th>" +
                 "<th>Z</th><th>Priority</th><th>State</th><th>Location</th></tr>";
-            var processes = _Scheduler.getRunningProcesses();
+            var processes = _Scheduler.residentList;
             if (processes.length == 0) {
                 processData += "<tr><td colspan='9'>No programs in execution</td></tr>";
             } else {
