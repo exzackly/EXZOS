@@ -61,14 +61,17 @@ var TSOS;
             for (var i = 0; i < opCode.operandSize; i++) {
                 TSOS.Control.opCodeOperandIndices.push(TSOS.Mmu.getPhysicalAddress(this.PC + i + 1, this.base));
             }
+            // Update wait cycles and turnaround cycles
+            _Scheduler.updateStatistics();
             // Execute
             opCode.fn.call(this);
             this.PC += opCode.operandSize;
-            // Update PCB, check single step mode, and update display
-            this.storeProcess(_Scheduler.getProcessForPid(this.pid));
+            // Update PCB, stop execution if single step mode, inform scheduler of cycle, and update display
+            this.storeProcess(this.currentProcess());
             if (_SSMode === true) {
                 this.isExecuting = false;
             }
+            _Scheduler.cpuDidCycle();
             TSOS.Control.hostUpdateDisplay();
         }
         storeProcess(pcb) {
@@ -94,6 +97,9 @@ var TSOS;
         terminateProcess() {
             this.isExecuting = false;
             this.pid = -1;
+        }
+        currentProcess() {
+            return _Scheduler.getProcessForPid(this.pid);
         }
         loadAccumulatorWithConstant() {
             /*
@@ -161,7 +167,7 @@ var TSOS;
             return;
         }
         brk() {
-            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROGRAM_IRQ, this.pid));
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROGRAM_IRQ, [this.pid, this.currentProcess().waitCycles, this.currentProcess().executeCycles]));
         }
         compareMemoryWithXReg() {
             /*
@@ -213,7 +219,7 @@ var TSOS;
             }
         }
         getNextAddress(location) {
-            var address = TSOS.Mmu.getBytesAtLogicalAddress(location, 2, this.base, this.limit); // todo: Replace magic number?
+            var address = TSOS.Mmu.getBytesAtLogicalAddress(location, 2, this.base, this.limit);
             // Regarding Kernighan's law: just get it right the first time and you won't ever have to debug
             // If you can't inherently understand this just by looking at it, you really need to ask yourself if you belong here /s
             // Seriously though look up reduce, it can do a lot of cool shit

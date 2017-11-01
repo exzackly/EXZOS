@@ -17,9 +17,10 @@ const TIMER_IRQ = 0; // Pages 23 (timer), 9 (interrupts), and 561 (interrupt pri
 // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 const KEYBOARD_IRQ = 1;
 const SYSCALL_IRQ = 2;
-const TERMINATE_PROGRAM_IRQ = 3;
-const INVALID_OPCODE_IRQ = 4;
-const MEMORY_ACCESS_VIOLATION_IRQ = 5;
+const CONTEXT_SWITCH_IRQ = 3;
+const TERMINATE_PROGRAM_IRQ = 4;
+const INVALID_OPCODE_IRQ = 5;
+const MEMORY_ACCESS_VIOLATION_IRQ = 6;
 const SEGMENT_SIZE = 256;
 const SEGMENT_COUNT = 3;
 //
@@ -30,6 +31,7 @@ var _CPU; // Utilize TypeScript's type annotation system to ensure that _CPU is 
 var _SSMode = false; // Single step mode
 var _Memory; // Utilize TypeScript's type annotation system to ensure that _Memory is an instance of the Memory class.
 var _Scheduler; // Utilize TypeScript's type annotation system to ensure that _Scheduler is an instance of the Scheduler class.
+var _SchedulerQuantum = 6; // Quantum for Scheduler. Defaults to 6
 var _OSclock = 0; // Page 23.
 var _Mode = 0; // (currently unused)  0 = Kernel Mode, 1 = User Mode.  See page 21.
 var _Canvas; // Initialized in Control.hostInit().

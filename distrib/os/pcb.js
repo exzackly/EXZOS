@@ -8,7 +8,7 @@
 var TSOS;
 (function (TSOS) {
     class Pcb {
-        constructor(pid, base, limit, priority, PC = 0, Acc = 0, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false) {
+        constructor(pid, base, limit, priority, PC = 0, Acc = 0, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false, waitCycles = 0, executeCycles = 0) {
             this.pid = pid;
             this.base = base;
             this.limit = limit;
@@ -19,6 +19,8 @@ var TSOS;
             this.Yreg = Yreg;
             this.Zflag = Zflag;
             this.isExecuting = isExecuting;
+            this.waitCycles = waitCycles;
+            this.executeCycles = executeCycles;
         }
     }
     TSOS.Pcb = Pcb;

@@ -20,7 +20,9 @@ module TSOS {
                     public Xreg: number = 0,
                     public Yreg: number = 0,
                     public Zflag: number = 0,
-                    public isExecuting: boolean = false) {
+                    public isExecuting: boolean = false,
+                    public waitCycles: number = 0,
+                    public executeCycles: number = 0) {
         }
 
     }

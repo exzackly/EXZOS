@@ -114,13 +114,18 @@ var TSOS;
                 case SYSCALL_IRQ:
                     _StdOut.putText(params);
                     break;
+                case CONTEXT_SWITCH_IRQ:
+                    var pid = _Scheduler.executeNextInReadyQueue();
+                    TSOS.Control.hostLog("Context switch -> PID " + pid, "OS");
+                    break;
                 case TERMINATE_PROGRAM_IRQ:
                     _StdOut.advanceLine();
-                    _StdOut.putText("PID " + params);
+                    _StdOut.putText("PID " + params[0]);
                     _StdOut.advanceLine();
-                    _StdOut.putText("Show CPU usage and profiling stats here in project 3");
-                    //todo: show CPU usage and profiling statistics here in project 3
-                    _Scheduler.terminateProcess(params);
+                    _StdOut.putText("Wait time: " + params[1] + " cycles.");
+                    _StdOut.advanceLine();
+                    _StdOut.putText("Turnaround time: " + (params[1] + params[2]) + " cycles."); // params[1] - wait cycles; params[2] - execute cycles
+                    _Scheduler.terminateProcess(params[0]);
                     _StdOut.advanceLine();
                     _OsShell.putPrompt();
                     break;

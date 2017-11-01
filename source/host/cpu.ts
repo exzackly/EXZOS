@@ -44,6 +44,7 @@ module TSOS {
                 _KernelInterruptQueue.enqueue(new Interrupt(INVALID_OPCODE_IRQ, this.pid));
                 return;
             }
+
             // Pass Control highlight indices
             Control.opCodeOperatorIndex = Mmu.getPhysicalAddress(this.PC, this.base);
             Control.opCodeOperandIndices = [];
@@ -51,16 +52,19 @@ module TSOS {
                 Control.opCodeOperandIndices.push(Mmu.getPhysicalAddress(this.PC+i+1, this.base));
             }
 
+            // Update wait cycles and turnaround cycles
+            _Scheduler.updateStatistics();
+
             // Execute
             opCode.fn.call(this);
             this.PC += opCode.operandSize;
 
-            // Update PCB, check single step mode, and update display
-
-            this.storeProcess(_Scheduler.getProcessForPid(this.pid));
+            // Update PCB, stop execution if single step mode, inform scheduler of cycle, and update display
+            this.storeProcess(this.currentProcess());
             if (_SSMode === true) {
                 this.isExecuting = false;
             }
+            _Scheduler.cpuDidCycle();
             Control.hostUpdateDisplay();
         }
 
@@ -74,7 +78,7 @@ module TSOS {
             pcb.isExecuting = this.isExecuting;
         }
 
-        public loadProcess(pcb: Pcb) {
+        public loadProcess(pcb: Pcb): void {
             this.pid = pcb.pid;
             this.base = pcb.base;
             this.limit = pcb.limit;
@@ -86,9 +90,13 @@ module TSOS {
             this.isExecuting = true;
         }
 
-        public terminateProcess() {
+        public terminateProcess(): void {
             this.isExecuting = false;
             this.pid = -1;
+        }
+
+        public currentProcess(): Pcb {
+            return _Scheduler.getProcessForPid(this.pid);
         }
 
         public opCodeMap = {
@@ -183,7 +191,7 @@ module TSOS {
         }
 
         public brk(): void {
-            _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROGRAM_IRQ, this.pid));
+            _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROGRAM_IRQ, [this.pid, this.currentProcess().waitCycles, this.currentProcess().executeCycles]));
         }
 
         public compareMemoryWithXReg(): void {
@@ -237,7 +245,7 @@ module TSOS {
         }
 
         public getNextAddress(location: number): number {
-            var address = Mmu.getBytesAtLogicalAddress(location, 2, this.base, this.limit); // todo: Replace magic number?
+            var address = Mmu.getBytesAtLogicalAddress(location, 2, this.base, this.limit);
             // Regarding Kernighan's law: just get it right the first time and you won't ever have to debug
             // If you can't inherently understand this just by looking at it, you really need to ask yourself if you belong here /s
             // Seriously though look up reduce, it can do a lot of cool shit

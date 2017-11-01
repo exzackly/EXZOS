@@ -19,7 +19,10 @@ var TSOS;
             this.commandMap = {
                 "ver": { desc: "- Displays the current version data. Persistence is key...", fn: this.shellVer },
                 "help": { desc: "- This is the help command. Seek help.", fn: this.shellHelp },
-                "shutdown": { desc: "- Shuts down the virtual OS but leaves the underlying host / hardware simulation running.", fn: this.shellShutdown },
+                "shutdown": {
+                    desc: "- Shuts down the virtual OS but leaves the underlying host / hardware simulation running.",
+                    fn: this.shellShutdown
+                },
                 "cls": { desc: "- Clears the screen and resets the cursor position.", fn: this.shellCls },
                 "man": { desc: "<topic> - Displays the MANual page for <topic>.", fn: this.shellMan },
                 "trace": { desc: "<on | off> - Turns the OS trace on or off.", fn: this.shellTrace },
@@ -34,7 +37,9 @@ var TSOS;
                 "run": { desc: "<pid> - Runs program with specified PID.", fn: this.shellRun },
                 "ps": { desc: "- Displays a list of the running processes and their IDs.", fn: this.shellPs },
                 "kill": { desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill },
-                "clearmem": { desc: "Clears all memory partitions.", fn: this.shellClearMem }
+                "clearmem": { desc: "Clears all memory partitions.", fn: this.shellClearMem },
+                "runall": { desc: "Runs all programs.", fn: this.shellRunAll },
+                "quantum": { desc: "<int> - Sets the round robin quantum.", fn: this.shellQuantum }
             };
             this.putPrompt();
         }
@@ -230,8 +235,11 @@ var TSOS;
             if (args.length > 0) {
                 var pid = parseInt(args[0]);
                 var isLoaded = _Scheduler.loadProcessOnCPU(pid);
-                if (!isLoaded) {
+                if (isLoaded === -1) {
                     _StdOut.putText("PID " + args[0] + " not found. Please supply a valid PID.");
+                }
+                else if (isLoaded === -2) {
+                    _StdOut.putText("Cannot run PID " + args[0] + ". Please wait until all running processes are completed.");
                 }
             }
             else {
@@ -250,9 +258,10 @@ var TSOS;
         shellKill(args) {
             if (args.length > 0) {
                 var pid = parseInt(args[0]);
-                if (_Scheduler.getProcessForPid(pid) !== null) {
+                var process = _Scheduler.getProcessForPid(pid);
+                if (process !== null) {
                     _StdOut.putText("PID " + pid + " killed.");
-                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROGRAM_IRQ, pid));
+                    _KernelInterruptQueue.enqueue(new TSOS.Interrupt(TERMINATE_PROGRAM_IRQ, [pid, process.waitCycles, process.executeCycles]));
                 }
                 else {
                     _StdOut.putText("PID " + args[0] + " not found. Please supply a valid PID.");
@@ -265,6 +274,24 @@ var TSOS;
         shellClearMem(args) {
             TSOS.Mmu.zeroMemory();
             _StdOut.putText("All memory partitions cleared.");
+        }
+        shellRunAll(args) {
+            var running = _Scheduler.runAll();
+            if (running === -1) {
+                _StdOut.putText("Runall failed; nothing to run");
+            }
+            else if (running === -2) {
+                _StdOut.putText("Cannot runall. Please wait until all running processes are completed.");
+            }
+        }
+        shellQuantum(args) {
+            if (args.length > 0 && !isNaN(parseInt(args[0])) && parseInt(args[0]) > 0) {
+                _SchedulerQuantum = parseInt(args[0]);
+                _StdOut.putText("Round robin quantum set to " + args[0] + ".");
+            }
+            else {
+                _StdOut.putText("Usage: quantum <int>  Please supply a valid positive integer quantum.");
+            }
         }
     }
     TSOS.Shell = Shell;
