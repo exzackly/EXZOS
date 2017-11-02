@@ -76,7 +76,7 @@ module TSOS {
             this.pidIncrementor += 1; // Increment for next process
             var limit = base+SEGMENT_SIZE;
             var priority = 0;
-            //todo: support variable priority in project 3
+            //todo: support variable priority in project 4
             _Scheduler.residentList.push(new Pcb(pid, base, limit, priority));
 
             // Load program into memory

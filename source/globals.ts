@@ -28,6 +28,8 @@ const MEMORY_ACCESS_VIOLATION_IRQ: number = 6;
 const SEGMENT_SIZE: number = 256;
 const SEGMENT_COUNT: number = 3;
 
+const HIGHLIGHT_MAP: { [type: number]: string; } = {1: "operandHighlight", 2: "operatorHighlight", 3: "memoryAccessHighlight"};
+
 //
 // Global Variables
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.

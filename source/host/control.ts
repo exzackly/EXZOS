@@ -27,8 +27,6 @@ module TSOS {
 
     export class Control {
         public static hostLogHistory: {clock: number, source: string, msg: string, now: string}[] = [];
-        public static opCodeOperatorIndex: number = -1;
-        public static opCodeOperandIndices: number[] = [];
 
         public static hostInit(): void {
             // This is called from index.html's onLoad event via the onDocumentLoad function pointer.
@@ -154,28 +152,23 @@ module TSOS {
             CPUElement.innerHTML = CPUData;
         }
 
-        public static hostUpdateDisplayMemory(): void {
+        public static hostCreateMemoryTable(): void {
             var memoryElement = <HTMLInputElement> document.getElementById("displayMemory");
-            var memory = _Memory.getBytes(0, SEGMENT_SIZE*SEGMENT_COUNT);
             var memoryData = "<table style='width: 100%;'><tbody>";
             for (var i = 0; i < SEGMENT_SIZE*SEGMENT_COUNT; i++) {
                 if ((i%8) == 0) { memoryData += `<tr><td style="font-weight: bold;">0x${Utils.toHex(i, 3)}</td>`; }
-                // Compare i with operator and operand indices. Apply appropriate id for highlighting
-                var id = "";
-                if (_CPU.pid !== -1 && i === Control.opCodeOperatorIndex) {
-                    id = " id='operatorHighlight'";
-                } else if (_CPU.pid !== -1 && Control.opCodeOperandIndices.includes(i)) {
-                    id = " id='operandHighlight'";
-                }
-                memoryData += `<td${id}>${Utils.toHex(memory[i])}</td>`; // id used for highlighting
+                memoryData += `<td id='cell${i}'>00</td>`; // id used for highlighting
                 if ((i%8) == 7) { memoryData += "</tr>"; }
             }
             memoryData += "</tbody></table>";
             memoryElement.innerHTML = memoryData;
-            // Scroll to highlighted operand, if exists
-            var operandHighlightElement = <HTMLTableCellElement> document.getElementById("operatorHighlight");
-            if (operandHighlightElement !== null) {
-                operandHighlightElement.scrollIntoView(true);
+        }
+
+        public static hostUpdateDisplayMemory(): void {
+            var memory = _Memory.getBytes(0, SEGMENT_SIZE*SEGMENT_COUNT);
+            for (var i = 0; i < memory.length; i++) {
+                var cellElement = <HTMLTableCellElement> document.getElementById("cell"+ i);
+                cellElement.innerHTML = Utils.toHex(memory[i]);
             }
         }
 
@@ -197,6 +190,36 @@ module TSOS {
             }
             var processesElement = <HTMLTableElement> document.getElementById("displayProcessesTable");
             processesElement.innerHTML = processData;
+        }
+
+        public static highlightMemoryCell(cell: number, type: number, scroll: boolean=false): void {
+            var cellElement = <HTMLTableCellElement> document.getElementById("cell"+ cell);
+            if (cellElement === null) { return; }
+            var className = HIGHLIGHT_MAP[type];
+            cellElement.className += className;
+            if (scroll === true) {
+                cellElement.scrollIntoView(scroll);
+            }
+
+            // if (type === 1) {
+            //     cellElement.className += "operandHighlight";
+            // } else if (type === 2) {
+            //     cellElement.className += "operatorHighlight";
+            // } else {
+            //     cellElement.className += "memoryAccessHighlight";
+            // }
+        }
+
+        public static removeHighlightFromMemoryCells(): void {
+            for (let key in HIGHLIGHT_MAP) {
+                if (HIGHLIGHT_MAP.hasOwnProperty(key)) {
+                    var className = HIGHLIGHT_MAP[key];
+                    var elements = document.getElementsByClassName(className);
+                    while(elements.length > 0) { // elements is live; as class is removed from element it is removed from elements
+                        elements[0].classList.remove(className);
+                    }
+                }
+            }
         }
 
         //
@@ -229,6 +252,7 @@ module TSOS {
             _Kernel = new Kernel();
             _Kernel.krnBootstrap();  // _GLaDOS.afterStartup() will get called in there, if configured.
 
+            Control.hostCreateMemoryTable();
             Control.hostUpdateDisplay();
         }
 

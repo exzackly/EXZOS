@@ -46,7 +46,7 @@ module TSOS {
         public cpuDidCycle(): void {
             this.quantum--;
             if (this.quantum === 0) {
-                if (this.readyQueue.length > 0) { // Context switch
+                if (this.readyQueue.length > 1) { // Another program exists; context switch
                     _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, null));
                 } else {
                     this.quantum = _SchedulerQuantum; // Reset quantum

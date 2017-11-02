@@ -32,7 +32,12 @@ module TSOS {
 
         public cycle(): void {
             _Kernel.krnTrace('CPU cycle');
-            // TODO: Accumulate CPU usage and profiling statistics here.
+
+            Control.removeHighlightFromMemoryCells();
+
+            // Highlight op code operator
+            var opCodeOperatorIndex = Mmu.getPhysicalAddress(this.PC, this.base);
+            Control.highlightMemoryCell(opCodeOperatorIndex, 1, true);
 
             // Fetch
             var opCodeByte = Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
@@ -45,11 +50,10 @@ module TSOS {
                 return;
             }
 
-            // Pass Control highlight indices
-            Control.opCodeOperatorIndex = Mmu.getPhysicalAddress(this.PC, this.base);
-            Control.opCodeOperandIndices = [];
+            // Highlight op code operand
             for (var i = 0; i < opCode.operandSize; i++) { // Operands are variable length; grab all
-                Control.opCodeOperandIndices.push(Mmu.getPhysicalAddress(this.PC+i+1, this.base));
+                var opCodeOperandIndex = Mmu.getPhysicalAddress(this.PC+i, this.base);
+                Control.highlightMemoryCell(opCodeOperandIndex, 2);
             }
 
             // Update wait cycles and turnaround cycles
@@ -65,7 +69,6 @@ module TSOS {
                 this.isExecuting = false;
             }
             _Scheduler.cpuDidCycle();
-            Control.hostUpdateDisplay();
         }
 
         public storeProcess(pcb: Pcb): void {
@@ -254,9 +257,10 @@ module TSOS {
 
         public getBytesAtNextAddress(location: number): number {
             var address = this.getNextAddress(location);
+            var memoryIndex = Mmu.getPhysicalAddress(address, this.base);
+            Control.highlightMemoryCell(memoryIndex, 3);
             return Mmu.getByteAtLogicalAddress(address, this.base, this.limit);
         }
-
 
     }
 }

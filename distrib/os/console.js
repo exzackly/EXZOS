@@ -68,7 +68,6 @@ var TSOS;
                     // ... and add it to our buffer.
                     this.buffer += chr;
                 }
-                // TODO: Write a case for Ctrl-C.
             }
         }
         putCommandHistory(chr) {

@@ -25,10 +25,7 @@ module TSOS {
         public commandMap = {
             "ver": {desc: "- Displays the current version data. Persistence is key...", fn: this.shellVer},
             "help": {desc: "- This is the help command. Seek help.", fn: this.shellHelp},
-            "shutdown": {
-                desc: "- Shuts down the virtual OS but leaves the underlying host / hardware simulation running.",
-                fn: this.shellShutdown
-            },
+            "shutdown": {desc: "- Shuts down the virtual OS but leaves the underlying host / hardware simulation running.", fn: this.shellShutdown},
             "cls": {desc: "- Clears the screen and resets the cursor position.", fn: this.shellCls},
             "man": {desc: "<topic> - Displays the MANual page for <topic>.", fn: this.shellMan},
             "trace": {desc: "<on | off> - Turns the OS trace on or off.", fn: this.shellTrace},

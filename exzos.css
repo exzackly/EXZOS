@@ -58,13 +58,18 @@ h3 {
     width: 372px;
 }
 
-#operatorHighlight {
+.operatorHighlight {
     color: red;
     font-weight: bold;
 }
 
-#operandHighlight {
+.operandHighlight {
     color: blue;
+    font-weight: bold;
+}
+
+.memoryAccessHighlight {
+    color: greenyellow;
     font-weight: bold;
 }
 

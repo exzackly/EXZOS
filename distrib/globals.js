@@ -23,6 +23,7 @@ const INVALID_OPCODE_IRQ = 5;
 const MEMORY_ACCESS_VIOLATION_IRQ = 6;
 const SEGMENT_SIZE = 256;
 const SEGMENT_COUNT = 3;
+const HIGHLIGHT_MAP = { 1: "operandHighlight", 2: "operatorHighlight", 3: "memoryAccessHighlight" };
 //
 // Global Variables
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.

@@ -45,7 +45,10 @@ var TSOS;
         }
         cycle() {
             _Kernel.krnTrace('CPU cycle');
-            // TODO: Accumulate CPU usage and profiling statistics here.
+            TSOS.Control.removeHighlightFromMemoryCells();
+            // Highlight op code operator
+            var opCodeOperatorIndex = TSOS.Mmu.getPhysicalAddress(this.PC, this.base);
+            TSOS.Control.highlightMemoryCell(opCodeOperatorIndex, 1, true);
             // Fetch
             var opCodeByte = TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
             this.PC += 1;
@@ -55,11 +58,10 @@ var TSOS;
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(INVALID_OPCODE_IRQ, this.pid));
                 return;
             }
-            // Pass Control highlight indices
-            TSOS.Control.opCodeOperatorIndex = TSOS.Mmu.getPhysicalAddress(this.PC, this.base);
-            TSOS.Control.opCodeOperandIndices = [];
+            // Highlight op code operand
             for (var i = 0; i < opCode.operandSize; i++) {
-                TSOS.Control.opCodeOperandIndices.push(TSOS.Mmu.getPhysicalAddress(this.PC + i + 1, this.base));
+                var opCodeOperandIndex = TSOS.Mmu.getPhysicalAddress(this.PC + i, this.base);
+                TSOS.Control.highlightMemoryCell(opCodeOperandIndex, 2);
             }
             // Update wait cycles and turnaround cycles
             _Scheduler.updateStatistics();
@@ -72,7 +74,6 @@ var TSOS;
                 this.isExecuting = false;
             }
             _Scheduler.cpuDidCycle();
-            TSOS.Control.hostUpdateDisplay();
         }
         storeProcess(pcb) {
             // pid, base, and limit will not change
@@ -227,6 +228,8 @@ var TSOS;
         }
         getBytesAtNextAddress(location) {
             var address = this.getNextAddress(location);
+            var memoryIndex = TSOS.Mmu.getPhysicalAddress(address, this.base);
+            TSOS.Control.highlightMemoryCell(memoryIndex, 3);
             return TSOS.Mmu.getByteAtLogicalAddress(address, this.base, this.limit);
         }
     }

@@ -132,33 +132,26 @@ var TSOS;
                 "</table>";
             CPUElement.innerHTML = CPUData;
         }
-        static hostUpdateDisplayMemory() {
+        static hostCreateMemoryTable() {
             var memoryElement = document.getElementById("displayMemory");
-            var memory = _Memory.getBytes(0, SEGMENT_SIZE * SEGMENT_COUNT);
             var memoryData = "<table style='width: 100%;'><tbody>";
             for (var i = 0; i < SEGMENT_SIZE * SEGMENT_COUNT; i++) {
                 if ((i % 8) == 0) {
                     memoryData += `<tr><td style="font-weight: bold;">0x${TSOS.Utils.toHex(i, 3)}</td>`;
                 }
-                // Compare i with operator and operand indices. Apply appropriate id for highlighting
-                var id = "";
-                if (_CPU.pid !== -1 && i === Control.opCodeOperatorIndex) {
-                    id = " id='operatorHighlight'";
-                }
-                else if (_CPU.pid !== -1 && Control.opCodeOperandIndices.includes(i)) {
-                    id = " id='operandHighlight'";
-                }
-                memoryData += `<td${id}>${TSOS.Utils.toHex(memory[i])}</td>`; // id used for highlighting
+                memoryData += `<td id='cell${i}'>00</td>`; // id used for highlighting
                 if ((i % 8) == 7) {
                     memoryData += "</tr>";
                 }
             }
             memoryData += "</tbody></table>";
             memoryElement.innerHTML = memoryData;
-            // Scroll to highlighted operand, if exists
-            var operandHighlightElement = document.getElementById("operatorHighlight");
-            if (operandHighlightElement !== null) {
-                operandHighlightElement.scrollIntoView(true);
+        }
+        static hostUpdateDisplayMemory() {
+            var memory = _Memory.getBytes(0, SEGMENT_SIZE * SEGMENT_COUNT);
+            for (var i = 0; i < memory.length; i++) {
+                var cellElement = document.getElementById("cell" + i);
+                cellElement.innerHTML = TSOS.Utils.toHex(memory[i]);
             }
         }
         static hostUpdateDisplayProcesses() {
@@ -180,6 +173,35 @@ var TSOS;
             }
             var processesElement = document.getElementById("displayProcessesTable");
             processesElement.innerHTML = processData;
+        }
+        static highlightMemoryCell(cell, type, scroll = false) {
+            var cellElement = document.getElementById("cell" + cell);
+            if (cellElement === null) {
+                return;
+            }
+            var className = HIGHLIGHT_MAP[type];
+            cellElement.className += className;
+            if (scroll === true) {
+                cellElement.scrollIntoView(scroll);
+            }
+            // if (type === 1) {
+            //     cellElement.className += "operandHighlight";
+            // } else if (type === 2) {
+            //     cellElement.className += "operatorHighlight";
+            // } else {
+            //     cellElement.className += "memoryAccessHighlight";
+            // }
+        }
+        static removeHighlightFromMemoryCells() {
+            for (let key in HIGHLIGHT_MAP) {
+                if (HIGHLIGHT_MAP.hasOwnProperty(key)) {
+                    var className = HIGHLIGHT_MAP[key];
+                    var elements = document.getElementsByClassName(className);
+                    while (elements.length > 0) {
+                        elements[0].classList.remove(className);
+                    }
+                }
+            }
         }
         //
         // Host Events
@@ -204,6 +226,7 @@ var TSOS;
             // .. and call the OS Kernel Bootstrap routine.
             _Kernel = new TSOS.Kernel();
             _Kernel.krnBootstrap(); // _GLaDOS.afterStartup() will get called in there, if configured.
+            Control.hostCreateMemoryTable();
             Control.hostUpdateDisplay();
         }
         static hostBtnHaltOS_click(btn) {
@@ -237,7 +260,5 @@ var TSOS;
         }
     }
     Control.hostLogHistory = [];
-    Control.opCodeOperatorIndex = -1;
-    Control.opCodeOperandIndices = [];
     TSOS.Control = Control;
 })(TSOS || (TSOS = {}));

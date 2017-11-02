@@ -44,7 +44,7 @@ var TSOS;
         cpuDidCycle() {
             this.quantum--;
             if (this.quantum === 0) {
-                if (this.readyQueue.length > 0) {
+                if (this.readyQueue.length > 1) {
                     _KernelInterruptQueue.enqueue(new TSOS.Interrupt(CONTEXT_SWITCH_IRQ, null));
                 }
                 else {
