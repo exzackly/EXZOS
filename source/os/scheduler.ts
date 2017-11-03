@@ -67,8 +67,10 @@ module TSOS {
 
         public executeNextInReadyQueue(): number {
             if (this.readyQueue.length > 1) { // Need something to switch to
-                var oldProcess = this.readyQueue.shift(); // Remove and stash first element
-                this.readyQueue.push(oldProcess); // Send process to end of ready queue
+                var oldProcessPID = this.readyQueue.shift(); // Remove and stash first element
+                var oldProcess = this.getProcessForPid(oldProcessPID);
+                _CPU.storeProcess(oldProcess); // Store state of process
+                this.readyQueue.push(oldProcessPID); // Send process to end of ready queue
                 return this.loadFirstProcessInReadyQueue();
             }
         }

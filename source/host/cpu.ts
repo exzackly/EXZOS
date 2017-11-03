@@ -69,6 +69,7 @@ module TSOS {
                 this.isExecuting = false;
             }
             _Scheduler.cpuDidCycle();
+            Control.hostUpdateDisplay();
         }
 
         public storeProcess(pcb: Pcb): void {
@@ -78,7 +79,6 @@ module TSOS {
             pcb.Xreg = this.Xreg;
             pcb.Yreg = this.Yreg;
             pcb.Zflag = this.Zflag;
-            pcb.isExecuting = this.isExecuting;
         }
 
         public loadProcess(pcb: Pcb): void {
@@ -117,7 +117,7 @@ module TSOS {
             0xD0: {operandSize: 1, mnemonic: "BNE", fn: this.branchIfNotEqual},            // Branch n bytes if Z flag = 0
             0xEE: {operandSize: 2, mnemonic: "INC", fn: this.incrementByte},               // Increment the value of a byte
             0xFF: {operandSize: 0, mnemonic: "SYS", fn: this.systemCall}                   // System Call
-        }
+        };
 
         public loadAccumulatorWithConstant(): void {
             /*

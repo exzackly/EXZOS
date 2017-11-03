@@ -74,6 +74,7 @@ var TSOS;
                 this.isExecuting = false;
             }
             _Scheduler.cpuDidCycle();
+            TSOS.Control.hostUpdateDisplay();
         }
         storeProcess(pcb) {
             // pid, base, and limit will not change
@@ -82,7 +83,6 @@ var TSOS;
             pcb.Xreg = this.Xreg;
             pcb.Yreg = this.Yreg;
             pcb.Zflag = this.Zflag;
-            pcb.isExecuting = this.isExecuting;
         }
         loadProcess(pcb) {
             this.pid = pcb.pid;

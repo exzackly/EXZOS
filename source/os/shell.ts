@@ -263,8 +263,9 @@ module TSOS {
             var processes = _Scheduler.residentList;
             for (var i = 0; i < processes.length; i++) {
                 var process = processes[i];
+                var state = _Scheduler.readyQueue[0] == process.pid ? "Executing" : "Ready";
                 var location = process.base !== -1 ? "Memory" : "Disk";
-                _StdOut.putText(process.pid + " " + location);
+                _StdOut.putText(process.pid + " " + state + " " + location);
                 _StdOut.advanceLine();
             }
         }
@@ -286,6 +287,7 @@ module TSOS {
 
         public shellClearMem(args) {
             Mmu.zeroMemory();
+            Control.removeHighlightFromMemoryCells();
             _StdOut.putText("All memory partitions cleared.");
         }
 
@@ -303,7 +305,7 @@ module TSOS {
                 _SchedulerQuantum = parseInt(args[0]);
                 _StdOut.putText("Round robin quantum set to " + args[0] + ".");
             } else {
-                _StdOut.putText("Usage: quantum <int>  Please supply a valid positive integer quantum.");
+                _StdOut.putText("Usage: quantum <int>  Please supply a valid positive integer quantum greater than 0.");
             }
         }
 

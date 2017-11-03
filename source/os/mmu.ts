@@ -52,7 +52,7 @@ module TSOS {
             return _Memory.getBytes(Mmu.getPhysicalAddress(logicalAddress, base), size);
         }
 
-        public static zeroBytesWithBaseandLimit(base: number, limit: number): void {
+        public static zeroBytesWithBaseAndLimit(base: number, limit: number): void {
             _Memory.zeroBytes(base, limit-base);
         }
 
@@ -76,14 +76,14 @@ module TSOS {
             this.pidIncrementor += 1; // Increment for next process
             var limit = base+SEGMENT_SIZE;
             var priority = 0;
-            //todo: support variable priority in project 4
+            //todo: support variable priority in project 3
             _Scheduler.residentList.push(new Pcb(pid, base, limit, priority));
 
             // Load program into memory
             var progArray = prog.match(/.{2}/g); // Break program into array of length 2 hex codes
             var program = progArray.map(x => Utils.fromHex(x)); // Convert program from hex to decimal
 
-            Mmu.zeroBytesWithBaseandLimit(base, limit); // Zero memory
+            Mmu.zeroBytesWithBaseAndLimit(base, limit); // Zero memory
             Mmu.setBytesAtLogicalAddress(0, program, base, limit); // Load program into memory segment
 
             Control.hostUpdateDisplay(); // Update display
@@ -103,7 +103,7 @@ module TSOS {
         }
 
         public static terminateProcess(pcb: Pcb): void {
-            Mmu.zeroBytesWithBaseandLimit(pcb.base, pcb.limit); // Remove program from memory
+            Mmu.zeroBytesWithBaseAndLimit(pcb.base, pcb.limit); // Remove program from memory
             var segment = Math.floor(pcb.base/SEGMENT_SIZE);
             Mmu.segmentStatus[segment] = -1; // Clear up segment for reuse
         }

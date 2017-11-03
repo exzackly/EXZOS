@@ -44,7 +44,7 @@ var TSOS;
             }
             return _Memory.getBytes(Mmu.getPhysicalAddress(logicalAddress, base), size);
         }
-        static zeroBytesWithBaseandLimit(base, limit) {
+        static zeroBytesWithBaseAndLimit(base, limit) {
             _Memory.zeroBytes(base, limit - base);
         }
         static zeroMemory() {
@@ -66,12 +66,12 @@ var TSOS;
             this.pidIncrementor += 1; // Increment for next process
             var limit = base + SEGMENT_SIZE;
             var priority = 0;
-            //todo: support variable priority in project 4
+            //todo: support variable priority in project 3
             _Scheduler.residentList.push(new TSOS.Pcb(pid, base, limit, priority));
             // Load program into memory
             var progArray = prog.match(/.{2}/g); // Break program into array of length 2 hex codes
             var program = progArray.map(x => TSOS.Utils.fromHex(x)); // Convert program from hex to decimal
-            Mmu.zeroBytesWithBaseandLimit(base, limit); // Zero memory
+            Mmu.zeroBytesWithBaseAndLimit(base, limit); // Zero memory
             Mmu.setBytesAtLogicalAddress(0, program, base, limit); // Load program into memory segment
             TSOS.Control.hostUpdateDisplay(); // Update display
             return pid;
@@ -87,7 +87,7 @@ var TSOS;
             return -1; // Empty segment not found
         }
         static terminateProcess(pcb) {
-            Mmu.zeroBytesWithBaseandLimit(pcb.base, pcb.limit); // Remove program from memory
+            Mmu.zeroBytesWithBaseAndLimit(pcb.base, pcb.limit); // Remove program from memory
             var segment = Math.floor(pcb.base / SEGMENT_SIZE);
             Mmu.segmentStatus[segment] = -1; // Clear up segment for reuse
         }

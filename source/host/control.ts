@@ -181,7 +181,7 @@ module TSOS {
             } else {
                 for (var i = 0; i < processes.length; i++) {
                     var process = processes[i];
-                    var state = process.isExecuting === true ? "Executing" : "Ready";
+                    var state = _Scheduler.readyQueue[0] == process.pid ? "Executing" : "Ready";
                     var location = process.base !== -1 ? "Memory" : "Disk";
                     processData += `<tr><td>${process.pid}</td><td>${Utils.toHex(process.PC)}</td><td>${Utils.toHex(process.Acc)}</td>` +
                         `<td>${Utils.toHex(process.Xreg)}</td><td>${Utils.toHex(process.Yreg)}</td><td>${process.Zflag}</td>` +
@@ -200,14 +200,6 @@ module TSOS {
             if (scroll === true) {
                 cellElement.scrollIntoView(scroll);
             }
-
-            // if (type === 1) {
-            //     cellElement.className += "operandHighlight";
-            // } else if (type === 2) {
-            //     cellElement.className += "operatorHighlight";
-            // } else {
-            //     cellElement.className += "memoryAccessHighlight";
-            // }
         }
 
         public static removeHighlightFromMemoryCells(): void {
