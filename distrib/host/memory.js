@@ -9,7 +9,7 @@
 var TSOS;
 (function (TSOS) {
     class Memory {
-        constructor(bytes = new Array(SEGMENT_SIZE * SEGMENT_COUNT)) {
+        constructor(bytes = new Array(MEMORY_SEGMENT_SIZE * MEMORY_SEGMENT_COUNT)) {
             this.bytes = bytes;
             this.zeroBytes(0, bytes.length);
         }

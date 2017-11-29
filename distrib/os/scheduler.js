@@ -19,7 +19,9 @@ var TSOS;
             this.quantum = quantum;
         }
         terminateProcess(pid) {
-            _CPU.terminateProcess();
+            if (_CPU.pid === pid) {
+                _CPU.terminateProcess();
+            }
             TSOS.Mmu.terminateProcess(this.getProcessForPid(pid));
             this.removeProcess(pid); // Remove process from resident list and ready queue
             if (this.readyQueue.length > 0) {
@@ -76,6 +78,13 @@ var TSOS;
             this.quantum = _SchedulerQuantum; // Reset quantum
             if (this.readyQueue.length > 0) {
                 var process = this.getProcessForPid(this.readyQueue[0]); // Get process for first element in ready queue
+                if (process.base == -1 || process.limit == -1) {
+                    if (_CPU.isExecuting === true && this.readyQueue.length > MEMORY_SEGMENT_COUNT) {
+                        var lastPIDInReadyQueue = this.readyQueue[this.readyQueue.length - 1]; // Roll out last process in ready queue
+                        TSOS.Mmu.rollOutProcessToDisk(lastPIDInReadyQueue);
+                    }
+                    TSOS.Mmu.rollInProcessFromDisk(this.readyQueue[0]); // Roll in process to be run
+                }
                 _CPU.loadProcess(process); // Load process onto CPU
                 TSOS.Control.hostUpdateDisplay();
                 return process.pid;

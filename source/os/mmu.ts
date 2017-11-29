@@ -16,7 +16,7 @@ module TSOS {
     export class Mmu {
 
         // Used to keep track of the PID of the process in each segment. -1 indicates that segment is empty
-        public static segmentStatus: number[] = Array(SEGMENT_COUNT).fill(-1); // Initialize segments with unused (-1) state
+        public static segmentStatus: number[] = Array(MEMORY_SEGMENT_COUNT).fill(-1); // Initialize segments with unused (-1) state
         public static pidIncrementor: number = 0;
 
         public static isValidMemoryAccess(logicalAddress: number, size: number, base: number, limit: number): boolean {
@@ -62,33 +62,51 @@ module TSOS {
                     _Scheduler.terminateProcess(Mmu.segmentStatus[i]);
                 }
             }
-            _Memory.zeroBytes(0, SEGMENT_SIZE*SEGMENT_COUNT);
+            _Memory.zeroBytes(0, MEMORY_SEGMENT_SIZE*MEMORY_SEGMENT_COUNT);
         }
 
-        public static createNewProcess(prog: string): number {
+        public static createNewProcess(program: string[]): number {
             // Create PCB for new process
             var pid = this.pidIncrementor;
             var base = Mmu.determineBase(pid);
-            if (base === -1) { // Empty segment not found
-                //todo: load to memory in project 4
-                return -2; // Return value of -2 denotes insufficient memory
-            }
+            //todo: implement run out of memory on disk
+            //return -2; // Return value of -2 denotes insufficient memory
             this.pidIncrementor += 1; // Increment for next process
-            var limit = base+SEGMENT_SIZE;
+            var limit = base !== -1 ? base+MEMORY_SEGMENT_SIZE : -1;
             var priority = 0;
-            //todo: support variable priority in project 3
+            //todo: support variable priority in project 4
             _Scheduler.residentList.push(new Pcb(pid, base, limit, priority));
 
-            // Load program into memory
-            var progArray = prog.match(/.{2}/g); // Break program into array of length 2 hex codes
-            var program = progArray.map(x => Utils.fromHex(x)); // Convert program from hex to decimal
-
-            Mmu.zeroBytesWithBaseAndLimit(base, limit); // Zero memory
-            Mmu.setBytesAtLogicalAddress(0, program, base, limit); // Load program into memory segment
+            // Store program...
+            var prog = program.map(x => Utils.fromHex(x)); // Convert program from hex to decimal
+            if (base !== -1) {
+                // ... in memory
+                Mmu.zeroBytesWithBaseAndLimit(base, limit); // Zero memory
+                Mmu.setBytesAtLogicalAddress(0, prog, base, limit); // Load program into memory segment
+            } else {
+                // ... on disk
+                Devices.hostStoreProgramOnDisk(pid, prog);
+            }
 
             Control.hostUpdateDisplay(); // Update display
 
             return pid;
+        }
+
+        public static rollOutProcessToDisk(pid: number): void {
+            var process = _Scheduler.getProcessForPid(pid);
+            var memory = Mmu.getBytesAtLogicalAddress(0, MEMORY_SEGMENT_SIZE, process.base, process.limit);
+            Mmu.clearSegmentForProcess(process);
+            Devices.hostStoreProgramOnDisk(pid, memory);
+        }
+
+        public static rollInProcessFromDisk(pid: number): void {
+            var process = _Scheduler.getProcessForPid(pid);
+            var base = Mmu.determineBase(pid);
+            var limit = base !== -1 ? base+MEMORY_SEGMENT_SIZE : -1;
+            process.base = base;
+            process.limit = limit;
+            Devices.hostLoadProgramFromDisk(pid);
         }
 
         public static determineBase(pid: number): number {
@@ -96,16 +114,26 @@ module TSOS {
             for (var i = 0; i < Mmu.segmentStatus.length; i++) {
                 if (Mmu.segmentStatus[i] === -1) {
                     Mmu.segmentStatus[i] = pid;
-                    return i*SEGMENT_SIZE;
+                    return i*MEMORY_SEGMENT_SIZE;
                 }
             }
             return -1; // Empty segment not found
         }
 
+        public static clearSegmentForProcess(pcb: Pcb): void {
+            var segment = Math.floor(pcb.base/MEMORY_SEGMENT_SIZE);
+            Mmu.segmentStatus[segment] = -1; // Mark segment as free
+            pcb.base = -1;
+            pcb.limit = -1;
+        }
+
         public static terminateProcess(pcb: Pcb): void {
-            Mmu.zeroBytesWithBaseAndLimit(pcb.base, pcb.limit); // Remove program from memory
-            var segment = Math.floor(pcb.base/SEGMENT_SIZE);
-            Mmu.segmentStatus[segment] = -1; // Clear up segment for reuse
+            if (pcb.base === -1 || pcb.limit === -1) { // Process is on disk
+                Devices.hostDeleteProgramFromDisk(pcb.pid);
+            } else { // Process is in memory
+                Mmu.zeroBytesWithBaseAndLimit(pcb.base, pcb.limit); // Remove program from memory
+                Mmu.clearSegmentForProcess(pcb); // Clear up segment for reuse
+            }
         }
 
     }

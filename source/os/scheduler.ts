@@ -21,7 +21,9 @@ module TSOS {
         }
 
         public terminateProcess(pid: number): void {
-            _CPU.terminateProcess();
+            if (_CPU.pid === pid) { // Remove process from CPU if running specified process
+                _CPU.terminateProcess();
+            }
             Mmu.terminateProcess(this.getProcessForPid(pid));
             this.removeProcess(pid); // Remove process from resident list and ready queue
             if (this.readyQueue.length > 0) { // Load next running process if there is one
@@ -79,6 +81,13 @@ module TSOS {
             this.quantum = _SchedulerQuantum; // Reset quantum
             if (this.readyQueue.length > 0) {
                 var process = this.getProcessForPid(this.readyQueue[0]); // Get process for first element in ready queue
+                if (process.base == -1 || process.limit == -1) { // Process on disk. Need to roll in
+                    if (_CPU.isExecuting === true && this.readyQueue.length > MEMORY_SEGMENT_COUNT) { // Check if need to roll out
+                        var lastPIDInReadyQueue = this.readyQueue[this.readyQueue.length-1]; // Roll out last process in ready queue
+                        Mmu.rollOutProcessToDisk(lastPIDInReadyQueue);
+                    }
+                    Mmu.rollInProcessFromDisk(this.readyQueue[0]); // Roll in process to be run
+                }
                 _CPU.loadProcess(process); // Load process onto CPU
                 Control.hostUpdateDisplay();
                 return process.pid;

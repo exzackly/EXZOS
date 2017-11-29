@@ -12,7 +12,7 @@ module TSOS {
 
     export class Memory {
 
-        constructor(public bytes: number[] = new Array(SEGMENT_SIZE*SEGMENT_COUNT)) {
+        constructor(public bytes: number[] = new Array(MEMORY_SEGMENT_SIZE*MEMORY_SEGMENT_COUNT)) {
             this.zeroBytes(0, bytes.length);
         }
 
