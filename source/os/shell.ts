@@ -18,7 +18,7 @@
 module TSOS {
     export class Shell {
 
-        constructor(public  promptStr = ">") {
+        constructor(public promptStr = ">") {
             this.putPrompt();
         }
 
@@ -42,14 +42,19 @@ module TSOS {
             "kill": {desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill},
             "clearmem": {desc: "Clears all memory partitions.", fn: this.shellClearMem},
             "runall": {desc: "Runs all programs.", fn: this.shellRunAll},
-            "quantum": {desc: "<int> - Sets the round robin quantum.", fn: this.shellQuantum}
+            "quantum": {desc: "<int> - Sets the round robin quantum.", fn: this.shellQuantum},
+            "create": {desc: "<filename> - Creates file with specified filename.", fn: this.shellCreate},
+            "read": {desc: "<filename> - Displays the contents of file with specified filename.", fn: this.shellRead},
+            "write": {desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename", fn: this.shellWrite},
+            "delete": {desc: "<filename> - Deletes file with specified filename.", fn: this.shellDelete},
+            "format": {desc: "- Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat}
         }
 
-        public putPrompt() {
+        public putPrompt(): void {
             _StdOut.putText(this.promptStr);
         }
 
-        public handleInput(buffer) {
+        public handleInput(buffer): void {
             _Kernel.krnTrace("Shell Command~" + buffer);
             //
             // Parse the input...
@@ -71,7 +76,7 @@ module TSOS {
         }
 
         // Note: args is an option parameter, ergo the ? which allows TypeScript to understand that.
-        public execute(fn, args?) {
+        public execute(fn, args?): void {
             // We just got a command, so advance the line...
             _StdOut.advanceLine();
             // ... call the command function passing in the args with some über-cool functional programming ...
@@ -120,12 +125,12 @@ module TSOS {
         // Shell Command Functions.  Kinda not part of Shell() class exactly, but
         // called from here, so kept here to avoid violating the law of least astonishment.
         //
-        public shellInvalidCommand() {
+        public shellInvalidCommand(): void {
             _StdOut.putText("Invalid Command. ");
             _StdOut.putText("Type 'help' for, well... help.");
         }
 
-        public shellVer(args) {
+        public shellVer(args): void {
             if (!this.wasCommandRepeated()) {
                 _StdOut.putText("Just assume it's still in alpha");
             } else {
@@ -135,7 +140,7 @@ module TSOS {
             }
         }
 
-        public shellHelp(args) {
+        public shellHelp(args): void {
             _StdOut.putText("Commands:");
             var commands = Object.keys(this.commandMap);
             for (var i = 0; i < commands.length; i++) {
@@ -144,19 +149,19 @@ module TSOS {
             }
         }
 
-        public shellShutdown(args) {
+        public shellShutdown(args): void {
             _StdOut.putText("Shutting down...");
             // Call Kernel shutdown routine.
             _Kernel.krnShutdown();
             // TODO: Stop the final prompt from being displayed.  If possible.  Not a high priority.  (Damn OCD!)
         }
 
-        public shellCls(args) {
+        public shellCls(args): void {
             _StdOut.clearScreen();
             _StdOut.resetXY();
         }
 
-        public shellMan(args) {
+        public shellMan(args): void {
             if (args.length > 0) {
                 var command = this.commandMap[args[0]];
                 /// Execute command if found
@@ -171,7 +176,7 @@ module TSOS {
             }
         }
 
-        public shellTrace(args) {
+        public shellTrace(args): void {
             if (args.length > 0) {
                 if (args[0] === "on") {
                     _Trace = true;
@@ -187,7 +192,7 @@ module TSOS {
             }
         }
 
-        public shellRot13(args) {
+        public shellRot13(args): void {
             if (args.length > 0) {
                 // Requires Utils.ts for rot13() function.
                 _StdOut.putText(args.join(' ') + " = '" + Utils.rot13(args.join(' ')) + "'");
@@ -196,7 +201,7 @@ module TSOS {
             }
         }
 
-        public shellPrompt(args) {
+        public shellPrompt(args): void {
             if (args.length > 0) {
                 this.promptStr = args[0];
             } else {
@@ -204,16 +209,16 @@ module TSOS {
             }
         }
 
-        public shellDate(args) {
+        public shellDate(args): void {
             var currentDateString = Control.hostGetCurrentDateTime();
             _StdOut.putText(currentDateString);
         }
 
-        public shellWhereAmI(args) {
+        public shellWhereAmI(args): void {
             _StdOut.putText("Not far enough");
         }
 
-        public shellProcrastinate(args) {
+        public shellProcrastinate(args): void {
             if (!this.wasCommandRepeated()) {
                 _StdOut.putText("Later");
             } else {
@@ -221,7 +226,7 @@ module TSOS {
             }
         }
 
-        public shellStatus(args) {
+        public shellStatus(args): void {
             if (args.length > 0) {
                 Control.hostSetStatus(args.join(" "));
             } else {
@@ -229,12 +234,12 @@ module TSOS {
             }
         }
 
-        public shellErupt(args) {
+        public shellErupt(args): void {
             _StdOut.putText("User initiated EXZOS shutdown");
             _Kernel.krnTrapError("User initiated OS error");
         }
 
-        public shellLoad(args) {
+        public shellLoad(args): void {
             var pid = Control.hostLoad(); // Have Control verify and load program
             if (pid === -1) {  // pid value of -1 denotes invalid program
                 _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z");
@@ -245,7 +250,7 @@ module TSOS {
             }
         }
 
-        public shellRun(args) {
+        public shellRun(args): void {
             if (args.length > 0) {
                 var pid = parseInt(args[0]);
                 var isLoaded = _Scheduler.loadProcessOnCPU(pid);
@@ -259,7 +264,7 @@ module TSOS {
             }
         }
 
-        public shellPs(args) {
+        public shellPs(args): void {
             var processes = _Scheduler.residentList;
             for (var i = 0; i < processes.length; i++) {
                 var process = processes[i];
@@ -270,7 +275,7 @@ module TSOS {
             }
         }
 
-        public shellKill(args) {
+        public shellKill(args): void {
             if (args.length > 0) {
                 var pid = parseInt(args[0]);
                 var process = _Scheduler.getProcessForPid(pid);
@@ -285,13 +290,13 @@ module TSOS {
             }
         }
 
-        public shellClearMem(args) {
+        public shellClearMem(args): void {
             Mmu.zeroMemory();
             Control.removeHighlightFromMemoryCells();
             _StdOut.putText("All memory partitions cleared.");
         }
 
-        public shellRunAll(args) {
+        public shellRunAll(args): void {
             var running = _Scheduler.runAll();
             if (running === -1) { // Return value -1 indicates nothing to run
                 _StdOut.putText("Runall failed; nothing to run");
@@ -300,13 +305,56 @@ module TSOS {
             }
         }
 
-        public shellQuantum(args) {
+        public shellQuantum(args): void {
             if (args.length > 0 && !isNaN(parseInt(args[0])) && parseInt(args[0]) > 0) {
                 _SchedulerQuantum = parseInt(args[0]);
                 _StdOut.putText("Round robin quantum set to " + args[0] + ".");
             } else {
                 _StdOut.putText("Usage: quantum <int>  Please supply a valid positive integer quantum greater than 0.");
             }
+        }
+
+        public shellCreate(args): void {
+            if (args.length > 0) {
+                Devices.hostCreateFileOnDisk(args[0]);
+            } else {
+                _StdOut.putText("Usage: create <filename>  Please supply a valid filename.");
+            }
+        }
+
+        public shellRead(args): void {
+            if (args.length > 0) {
+                Devices.hostReadFileFromDisk(args[0]);
+            } else {
+                _StdOut.putText("Usage: read <filename>  Please supply a valid filename.");
+            }
+        }
+
+        public shellWrite(args): void {
+            if (args.length > 0) {
+                var filename = args[0];
+                var data = args.slice(1).join(" ");
+                if (data.length <= 1 || data[0] !== "\"" || data[data.length - 1] !== "\"") {
+                    _StdOut.putText("Usage: write <filename> \"<data>\"  Please supply a valid filename and data enclosed in quotes.");
+                    return;
+                }
+                data = data.substring(1, data.length - 1);
+                Devices.hostWriteFileToDisk(filename, data);
+            } else {
+                _StdOut.putText("Usage: write <filename> \"<data>\"  Please supply a valid filename and data enclosed in quotes.");
+            }
+        }
+
+        public shellDelete(args): void {
+            if (args.length > 0) {
+                Devices.hostDeleteFileFromDisk(args[0]);
+            } else {
+                _StdOut.putText("Usage: delete <filename>  Please supply a valid filename.");
+            }
+        }
+
+        public shellFormat(args): void {
+            Devices.hostFormatDisk();
         }
 
     }

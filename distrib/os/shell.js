@@ -36,7 +36,12 @@ var TSOS;
                 "kill": { desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill },
                 "clearmem": { desc: "Clears all memory partitions.", fn: this.shellClearMem },
                 "runall": { desc: "Runs all programs.", fn: this.shellRunAll },
-                "quantum": { desc: "<int> - Sets the round robin quantum.", fn: this.shellQuantum }
+                "quantum": { desc: "<int> - Sets the round robin quantum.", fn: this.shellQuantum },
+                "create": { desc: "<filename> - Creates file with specified filename.", fn: this.shellCreate },
+                "read": { desc: "<filename> - Displays the contents of file with specified filename.", fn: this.shellRead },
+                "write": { desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename", fn: this.shellWrite },
+                "delete": { desc: "<filename> - Deletes file with specified filename.", fn: this.shellDelete },
+                "format": { desc: "- Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat }
             };
             this.putPrompt();
         }
@@ -291,6 +296,48 @@ var TSOS;
             else {
                 _StdOut.putText("Usage: quantum <int>  Please supply a valid positive integer quantum greater than 0.");
             }
+        }
+        shellCreate(args) {
+            if (args.length > 0) {
+                TSOS.Devices.hostCreateFileOnDisk(args[0]);
+            }
+            else {
+                _StdOut.putText("Usage: create <filename>  Please supply a valid filename.");
+            }
+        }
+        shellRead(args) {
+            if (args.length > 0) {
+                TSOS.Devices.hostReadFileFromDisk(args[0]);
+            }
+            else {
+                _StdOut.putText("Usage: read <filename>  Please supply a valid filename.");
+            }
+        }
+        shellWrite(args) {
+            if (args.length > 0) {
+                var filename = args[0];
+                var data = args.slice(1).join(" ");
+                if (data.length <= 1 || data[0] !== "\"" || data[data.length - 1] !== "\"") {
+                    _StdOut.putText("Usage: write <filename> \"<data>\"  Please supply a valid filename and data enclosed in quotes.");
+                    return;
+                }
+                data = data.substring(1, data.length - 1);
+                TSOS.Devices.hostWriteFileToDisk(filename, data);
+            }
+            else {
+                _StdOut.putText("Usage: write <filename> \"<data>\"  Please supply a valid filename and data enclosed in quotes.");
+            }
+        }
+        shellDelete(args) {
+            if (args.length > 0) {
+                TSOS.Devices.hostDeleteFileFromDisk(args[0]);
+            }
+            else {
+                _StdOut.putText("Usage: delete <filename>  Please supply a valid filename.");
+            }
+        }
+        shellFormat(args) {
+            TSOS.Devices.hostFormatDisk();
         }
     }
     TSOS.Shell = Shell;

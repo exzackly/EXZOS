@@ -48,6 +48,15 @@ var TSOS;
         static fromHex(hexString) {
             return parseInt(hexString, 16);
         }
+        static toHexArray(str) {
+            var strArray = str.split("");
+            return strArray.map(x => x.charCodeAt(0));
+        }
+        static fromHexArray(hexArray) {
+            var hexData = hexArray.map(x => String.fromCharCode(x));
+            var dataString = hexData.join("");
+            return dataString.replace(/\0/g, "");
+        }
     }
     TSOS.Utils = Utils;
 })(TSOS || (TSOS = {}));

@@ -51,5 +51,18 @@ module TSOS {
         public static fromHex(hexString: string) : number {
             return parseInt(hexString, 16);
         }
+
+        public static toHexArray(str: string): number[] {
+            var strArray = str.split("");
+            return strArray.map(x => x.charCodeAt(0));
+        }
+
+        public static fromHexArray(hexArray: number[]): string {
+            var hexData = hexArray.map(x => String.fromCharCode(x));
+            var dataString = hexData.join("");
+            return dataString.replace(/\0/g, "");
+        }
+
     }
+
 }
