@@ -47,7 +47,7 @@ h3 {
     text-align: center;
 }
 
-#taHostLog, #displayCPU, #displayMemory, #displayProcesses {
+#taHostLog, #displayCPU, #displayMemory, #displayDisk, #displayProcesses {
     -moz-appearance: textfield;
     -webkit-appearance: textfield;
     background-color: white;

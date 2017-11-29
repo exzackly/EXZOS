@@ -26,12 +26,12 @@
 module TSOS {
 
     export class Control {
-        public static hostLogHistory: {clock: number, source: string, msg: string, now: string}[] = [];
+        public static hostLogHistory: { clock: number, source: string, msg: string, now: string }[] = [];
 
         public static hostInit(): void {
             // This is called from index.html's onLoad event via the onDocumentLoad function pointer.
 
-            // Get a global reference to the canvas.  TODO: Should we move this stuff into a Display Device Driver?
+            // Get a global reference to the canvas.
             _Canvas = <HTMLCanvasElement>document.getElementById('display');
 
             // Get a global reference to the drawing context.
@@ -42,7 +42,7 @@ module TSOS {
 
             // Clear the log text box.
             // Use the TypeScript cast to HTMLInputElement
-            (<HTMLInputElement> document.getElementById("taHostLog")).value="";
+            (<HTMLInputElement> document.getElementById("taHostLog")).value = "";
 
             // Set focus on the start button.
             // Use the TypeScript cast to HTMLInputElement
@@ -77,10 +77,10 @@ module TSOS {
 
             // Build the log string.
             var newLog = {clock, source, msg, now};
-            var lastLog = Control.hostLogHistory[Control.hostLogHistory.length-1];
+            var lastLog = Control.hostLogHistory[Control.hostLogHistory.length - 1];
             // Compare new log string with old; replace old with new if same source and msg
             if (lastLog !== undefined && source === lastLog.source && msg === lastLog.msg) {
-                Control.hostLogHistory[Control.hostLogHistory.length-1] = newLog; // source and msg same; replace old with new
+                Control.hostLogHistory[Control.hostLogHistory.length - 1] = newLog; // source and msg same; replace old with new
             } else {
                 Control.hostLogHistory.push(newLog); // new log string; append to hostLogHistory
             }
@@ -93,7 +93,7 @@ module TSOS {
             var currentDate = new Date();
             // JavaScript doesn't have any good date format options; the 0 & slice parts are to ensure uniform padding
             var dateString = currentDate.getFullYear() + "-" +
-                ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" +
+                ("0" + (currentDate.getMonth() + 1)).slice(-2) + "-" +
                 ("0" + currentDate.getDate()).slice(-2) + " ";
             var timeString = ("0" + currentDate.getHours()).slice(-2) + ":" +
                 ("0" + currentDate.getMinutes()).slice(-2) + ":" +
@@ -124,7 +124,7 @@ module TSOS {
             // Grab text from taProgramInput
             var program = (<HTMLInputElement> document.getElementById("taProgramInput")).value;
             program = program.replace(/\s+/g, ""); // Remove whitespace
-            if (program.length == 0 || program.length > (SEGMENT_SIZE*2)) { // taProgramInput is empty or too large
+            if (program.length === 0 || program.length > (MEMORY_SEGMENT_SIZE * 2)) { // taProgramInput is empty or too large
                 return -1; // Return value of -1 denotes invalid program
             }
             var re = new RegExp("[^0-9a-fA-F]"); // Match any non-hex character
@@ -132,7 +132,8 @@ module TSOS {
             if (invalidCharactersFound === true) {
                 return -1; // Return value of -1 denotes invalid program
             } else {
-                return Mmu.createNewProcess(program); // Pass to Scheduler to finish load and assign PID
+                var progArray = program.match(/.{2}/g); // Break program into array of length 2 hex codes
+                return Mmu.createNewProcess(progArray); // Pass to Mmu to finish load and assign PID
             }
         }
 
@@ -155,20 +156,61 @@ module TSOS {
         public static hostCreateMemoryTable(): void {
             var memoryElement = <HTMLInputElement> document.getElementById("displayMemory");
             var memoryData = "<table style='width: 100%;'><tbody>";
-            for (var i = 0; i < SEGMENT_SIZE*SEGMENT_COUNT; i++) {
-                if ((i%8) == 0) { memoryData += `<tr><td style="font-weight: bold;">0x${Utils.toHex(i, 3)}</td>`; }
-                memoryData += `<td id='cell${i}'>00</td>`; // id used for highlighting
-                if ((i%8) == 7) { memoryData += "</tr>"; }
+            for (var i = 0; i < MEMORY_SEGMENT_SIZE * MEMORY_SEGMENT_COUNT; i++) {
+                if ((i % 8) == 0) {
+                    memoryData += `<tr><td style="font-weight: bold;">0x${Utils.toHex(i, 3)}</td>`;
+                }
+                memoryData += `<td id="memoryCell${i}">00</td>`; // id used for highlighting
+                if ((i % 8) == 7) {
+                    memoryData += "</tr>";
+                }
             }
             memoryData += "</tbody></table>";
             memoryElement.innerHTML = memoryData;
+            Control.hostUpdateDisplayMemory();
         }
 
         public static hostUpdateDisplayMemory(): void {
-            var memory = _Memory.getBytes(0, SEGMENT_SIZE*SEGMENT_COUNT);
+            var memory = _Memory.getBytes(0, MEMORY_SEGMENT_SIZE * MEMORY_SEGMENT_COUNT);
             for (var i = 0; i < memory.length; i++) {
-                var cellElement = <HTMLTableCellElement> document.getElementById("cell"+ i);
+                var cellElement = <HTMLTableCellElement> document.getElementById("memoryCell" + i);
                 cellElement.innerHTML = Utils.toHex(memory[i]);
+            }
+        }
+
+        public static hostCreateDiskTable(): void {
+            var diskElement = <HTMLInputElement> document.getElementById("displayDisk");
+            var diskData = "<table style='width: 100%;'><tbody>";
+            for (var track = 0; track < DISK_TRACK_COUNT; track++) {
+                for (var sector = 0; sector < DISK_SECTOR_COUNT; sector++) {
+                    for (var block = 0; block < DISK_BLOCK_COUNT; block++) {
+                        var location = new DiskLocation(track, sector, block);
+                        diskData += `<tr><td style="font-weight: bold;">${location.key()}</td>`;
+                        diskData += `<td id="diskCell${location.key()}"><span style="color: indianred;">00</span>`;
+                        diskData += `<span style="color: lightskyblue;">000000</span>`;
+                        diskData += `${"00".repeat(DISK_BLOCK_WRITABLE_SIZE)}</td></tr>`;
+                    }
+                }
+            }
+            diskData += "</tbody></table>";
+            diskElement.innerHTML = diskData;
+            Control.hostUpdateDisplayDisk();
+        }
+
+        public static hostUpdateDisplayDisk(): void {
+            for (var track = 0; track < DISK_TRACK_COUNT; track++) {
+                for (var sector = 0; sector < DISK_SECTOR_COUNT; sector++) {
+                    for (var block = 0; block < DISK_BLOCK_COUNT; block++) {
+                        var location = new DiskLocation(track, sector, block);
+                        var cellElement = <HTMLTableCellElement> document.getElementById("diskCell" + location.key());
+                        var data = _Disk.getBlock(location);
+                        var hexData = data.map(x => Utils.toHex(x));
+                        var cellData = `<span style="color: indianred;">${hexData[0]}</span>`;
+                        cellData += `<span style="color: lightskyblue;">${hexData.slice(1, 4).join("")}</span>`;
+                        cellData += hexData.slice(4).join("");
+                        cellElement.innerHTML = cellData;
+                    }
+                }
             }
         }
 
@@ -192,9 +234,11 @@ module TSOS {
             processesElement.innerHTML = processData;
         }
 
-        public static highlightMemoryCell(cell: number, type: number, scroll: boolean=false): void {
-            var cellElement = <HTMLTableCellElement> document.getElementById("cell"+ cell);
-            if (cellElement === null) { return; }
+        public static highlightMemoryCell(cell: number, type: number, scroll: boolean = false): void {
+            var cellElement = <HTMLTableCellElement> document.getElementById("memoryCell" + cell);
+            if (cellElement === null) {
+                return;
+            }
             var className = HIGHLIGHT_MAP[type];
             cellElement.className += className;
             if (scroll === true) {
@@ -207,7 +251,7 @@ module TSOS {
                 if (HIGHLIGHT_MAP.hasOwnProperty(key)) {
                     var className = HIGHLIGHT_MAP[key];
                     var elements = document.getElementsByClassName(className);
-                    while(elements.length > 0) { // elements is live; as class is removed from element it is removed from elements
+                    while (elements.length > 0) { // elements is live; as class is removed from element it is removed from elements
                         elements[0].classList.remove(className);
                     }
                 }
@@ -235,17 +279,21 @@ module TSOS {
             // ... Create Memory ...
             _Memory = new Memory();
 
+            // ... Create Disk ...
+            _Disk = new Disk();
+
             // ... Create Scheduler ...
             _Scheduler = new Scheduler();
+
+            // ... Create displays ...
+            Control.hostCreateMemoryTable();
+            Control.hostCreateDiskTable();
 
             // ... then set the host clock pulse ...
             _hardwareClockID = setInterval(Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
             // .. and call the OS Kernel Bootstrap routine.
             _Kernel = new Kernel();
             _Kernel.krnBootstrap();  // _GLaDOS.afterStartup() will get called in there, if configured.
-
-            Control.hostCreateMemoryTable();
-            Control.hostUpdateDisplay();
         }
 
         public static hostBtnHaltOS_click(btn): void {

@@ -16,6 +16,7 @@
     <script type="text/javascript" src="distrib/host/devices.js"></script>
     <script type="text/javascript" src="distrib/host/cpu.js"></script>
     <script type="text/javascript" src="distrib/host/memory.js"></script>
+    <script type="text/javascript" src="distrib/host/disk.js"></script>
 
     <!-- Virtual OS Routines: Make sure Kernel code is last, since it needs those above it. -->
     <script type="text/javascript" src="distrib/os/mmu.js"></script>
@@ -26,6 +27,7 @@
     <script type="text/javascript" src="distrib/os/console.js"></script>
     <script type="text/javascript" src="distrib/os/deviceDriver.js"></script>
     <script type="text/javascript" src="distrib/os/deviceDriverKeyboard.js"></script>
+    <script type="text/javascript" src="distrib/os/deviceDriverDisk.js"></script>
     <script type="text/javascript" src="distrib/os/queue.js"></script>
     <script type="text/javascript" src="distrib/os/shell.js"></script>
     <script type="text/javascript" src="distrib/os/shellCommand.js"></script>
@@ -35,7 +37,7 @@
     <!-- Other Routines -->
     <script type="text/javascript" src="distrib/utils.js"></script>
     <!-- Uncomment the line below to enable GLaDOS testing. -->
-    <script type="text/javascript" src="http://alanclasses.github.io/TSOS/test/glados-ip3.js"></script>
+    <script type="text/javascript" src="http://alanclasses.github.io/TSOS/test/glados-ip4.js"></script>
 
 </head>
 
@@ -167,6 +169,11 @@ AC FF 00 FF A9 EE 8D FF 00 A2 02 AC FF 00 FF A9
         <div id="divTaskbarRight">
             <label id="taskbarDate"></label>
             <br><br>
+        </div>
+
+        <div id="divDisk" style="opacity: 0.9;">
+            <label>Disk</label>
+            <div id="displayDisk" style="height: 200px; width: 400px; overflow-y: scroll;"> </div>
         </div>
 
         <div id="divProcesses" style="opacity: 0.9;">

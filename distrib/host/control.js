@@ -26,7 +26,7 @@ var TSOS;
     class Control {
         static hostInit() {
             // This is called from index.html's onLoad event via the onDocumentLoad function pointer.
-            // Get a global reference to the canvas.  TODO: Should we move this stuff into a Display Device Driver?
+            // Get a global reference to the canvas.
             _Canvas = document.getElementById('display');
             // Get a global reference to the drawing context.
             _DrawingContext = _Canvas.getContext("2d");
@@ -106,7 +106,7 @@ var TSOS;
             // Grab text from taProgramInput
             var program = document.getElementById("taProgramInput").value;
             program = program.replace(/\s+/g, ""); // Remove whitespace
-            if (program.length == 0 || program.length > (SEGMENT_SIZE * 2)) {
+            if (program.length === 0 || program.length > (MEMORY_SEGMENT_SIZE * 2)) {
                 return -1; // Return value of -1 denotes invalid program
             }
             var re = new RegExp("[^0-9a-fA-F]"); // Match any non-hex character
@@ -115,7 +115,8 @@ var TSOS;
                 return -1; // Return value of -1 denotes invalid program
             }
             else {
-                return TSOS.Mmu.createNewProcess(program); // Pass to Scheduler to finish load and assign PID
+                var progArray = program.match(/.{2}/g); // Break program into array of length 2 hex codes
+                return TSOS.Mmu.createNewProcess(progArray); // Pass to Mmu to finish load and assign PID
             }
         }
         static hostUpdateDisplay() {
@@ -135,23 +136,58 @@ var TSOS;
         static hostCreateMemoryTable() {
             var memoryElement = document.getElementById("displayMemory");
             var memoryData = "<table style='width: 100%;'><tbody>";
-            for (var i = 0; i < SEGMENT_SIZE * SEGMENT_COUNT; i++) {
+            for (var i = 0; i < MEMORY_SEGMENT_SIZE * MEMORY_SEGMENT_COUNT; i++) {
                 if ((i % 8) == 0) {
                     memoryData += `<tr><td style="font-weight: bold;">0x${TSOS.Utils.toHex(i, 3)}</td>`;
                 }
-                memoryData += `<td id='cell${i}'>00</td>`; // id used for highlighting
+                memoryData += `<td id="memoryCell${i}">00</td>`; // id used for highlighting
                 if ((i % 8) == 7) {
                     memoryData += "</tr>";
                 }
             }
             memoryData += "</tbody></table>";
             memoryElement.innerHTML = memoryData;
+            Control.hostUpdateDisplayMemory();
         }
         static hostUpdateDisplayMemory() {
-            var memory = _Memory.getBytes(0, SEGMENT_SIZE * SEGMENT_COUNT);
+            var memory = _Memory.getBytes(0, MEMORY_SEGMENT_SIZE * MEMORY_SEGMENT_COUNT);
             for (var i = 0; i < memory.length; i++) {
-                var cellElement = document.getElementById("cell" + i);
+                var cellElement = document.getElementById("memoryCell" + i);
                 cellElement.innerHTML = TSOS.Utils.toHex(memory[i]);
+            }
+        }
+        static hostCreateDiskTable() {
+            var diskElement = document.getElementById("displayDisk");
+            var diskData = "<table style='width: 100%;'><tbody>";
+            for (var track = 0; track < DISK_TRACK_COUNT; track++) {
+                for (var sector = 0; sector < DISK_SECTOR_COUNT; sector++) {
+                    for (var block = 0; block < DISK_BLOCK_COUNT; block++) {
+                        var location = new TSOS.DiskLocation(track, sector, block);
+                        diskData += `<tr><td style="font-weight: bold;">${location.key()}</td>`;
+                        diskData += `<td id="diskCell${location.key()}"><span style="color: indianred;">00</span>`;
+                        diskData += `<span style="color: lightskyblue;">000000</span>`;
+                        diskData += `${"00".repeat(DISK_BLOCK_WRITABLE_SIZE)}</td></tr>`;
+                    }
+                }
+            }
+            diskData += "</tbody></table>";
+            diskElement.innerHTML = diskData;
+            Control.hostUpdateDisplayDisk();
+        }
+        static hostUpdateDisplayDisk() {
+            for (var track = 0; track < DISK_TRACK_COUNT; track++) {
+                for (var sector = 0; sector < DISK_SECTOR_COUNT; sector++) {
+                    for (var block = 0; block < DISK_BLOCK_COUNT; block++) {
+                        var location = new TSOS.DiskLocation(track, sector, block);
+                        var cellElement = document.getElementById("diskCell" + location.key());
+                        var data = _Disk.getBlock(location);
+                        var hexData = data.map(x => TSOS.Utils.toHex(x));
+                        var cellData = `<span style="color: indianred;">${hexData[0]}</span>`;
+                        cellData += `<span style="color: lightskyblue;">${hexData.slice(1, 4).join("")}</span>`;
+                        cellData += hexData.slice(4).join("");
+                        cellElement.innerHTML = cellData;
+                    }
+                }
             }
         }
         static hostUpdateDisplayProcesses() {
@@ -175,7 +211,7 @@ var TSOS;
             processesElement.innerHTML = processData;
         }
         static highlightMemoryCell(cell, type, scroll = false) {
-            var cellElement = document.getElementById("cell" + cell);
+            var cellElement = document.getElementById("memoryCell" + cell);
             if (cellElement === null) {
                 return;
             }
@@ -212,15 +248,18 @@ var TSOS;
             _CPU = new TSOS.Cpu(); // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
             // ... Create Memory ...
             _Memory = new TSOS.Memory();
+            // ... Create Disk ...
+            _Disk = new TSOS.Disk();
             // ... Create Scheduler ...
             _Scheduler = new TSOS.Scheduler();
+            // ... Create displays ...
+            Control.hostCreateMemoryTable();
+            Control.hostCreateDiskTable();
             // ... then set the host clock pulse ...
             _hardwareClockID = setInterval(TSOS.Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
             // .. and call the OS Kernel Bootstrap routine.
             _Kernel = new TSOS.Kernel();
             _Kernel.krnBootstrap(); // _GLaDOS.afterStartup() will get called in there, if configured.
-            Control.hostCreateMemoryTable();
-            Control.hostUpdateDisplay();
         }
         static hostBtnHaltOS_click(btn) {
             Control.hostLog("Emergency halt", "host");
