@@ -11,7 +11,7 @@
 //
 // Global CONSTANTS (TypeScript 1.5 introduced const. Very cool.)
 //
-const APP_NAME: string    = "EXZOS";   // Pronouce it "exhaust", it's much cooler that way
+const APP_NAME: string    = "EXZOS";   // Pronounce it "exhaust", it's much cooler that way
 const APP_VERSION: string = "0.07";   // What did you expect?
 
 const CPU_CLOCK_INTERVAL: number = 100;   // This is in ms (milliseconds) so 1000 = 1 second.
@@ -19,24 +19,32 @@ const CPU_CLOCK_INTERVAL: number = 100;   // This is in ms (milliseconds) so 100
 const TIMER_IRQ: number = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
                               // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 const KEYBOARD_IRQ: number = 1;
-const SYSCALL_IRQ: number = 2;
-const CONTEXT_SWITCH_IRQ: number = 3;
-const TERMINATE_PROGRAM_IRQ: number = 4;
-const INVALID_OPCODE_IRQ: number = 5;
-const MEMORY_ACCESS_VIOLATION_IRQ: number = 6;
+const DISK_IRQ: number = 2;
+const SYSCALL_IRQ: number = 3;
+const CONTEXT_SWITCH_IRQ: number = 4;
+const TERMINATE_PROGRAM_IRQ: number = 5;
+const INVALID_OPCODE_IRQ: number = 6;
+const MEMORY_ACCESS_VIOLATION_IRQ: number = 7;
 
-const SEGMENT_SIZE: number = 256;
-const SEGMENT_COUNT: number = 3;
+const MEMORY_SEGMENT_COUNT: number = 3;
+const MEMORY_SEGMENT_SIZE: number = 256;
+
+const DISK_TRACK_COUNT: number = 4;
+const DISK_SECTOR_COUNT: number = 8;
+const DISK_BLOCK_COUNT: number = 8;
+const DISK_BLOCK_SIZE: number = 64;
+const DISK_BLOCK_RESERVED_SIZE: number = 4; // 4 bytes reserved per block [used, next track, next sector, next block, ...data...]
+const DISK_BLOCK_WRITABLE_SIZE: number = DISK_BLOCK_SIZE-DISK_BLOCK_RESERVED_SIZE;
 
 const HIGHLIGHT_MAP: { [type: number]: string; } = {1: "operandHighlight", 2: "operatorHighlight", 3: "memoryAccessHighlight"};
 
 //
 // Global Variables
-// TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 //
 var _CPU: TSOS.Cpu;  // Utilize TypeScript's type annotation system to ensure that _CPU is an instance of the Cpu class.
 var _SSMode: boolean = false; // Single step mode
 var _Memory: TSOS.Memory;  // Utilize TypeScript's type annotation system to ensure that _Memory is an instance of the Memory class.
+var _Disk: TSOS.Disk;  // Utilize TypeScript's type annotation system to ensure that _Disk is an instance of the Disk class.
 var _Scheduler: TSOS.Scheduler;  // Utilize TypeScript's type annotation system to ensure that _Scheduler is an instance of the Scheduler class.
 
 var _SchedulerQuantum: number = 6; // Quantum for Scheduler. Defaults to 6
@@ -68,7 +76,8 @@ var _Console: TSOS.Console;
 var _OsShell: TSOS.Shell;
 
 // Global Device Driver Objects - page 12
-var _krnKeyboardDriver; //  = null;
+var _krnKeyboardDriver;
+var _krnDiskDriver;
 
 var _hardwareClockID: number = null;
 
