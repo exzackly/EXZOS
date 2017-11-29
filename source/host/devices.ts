@@ -60,10 +60,50 @@ module TSOS {
             if (event.target.id === "display") {
                 event.preventDefault();
                 // Note the pressed key code in the params (Mozilla-specific).
-                var params = new Array(event.which, event.shiftKey, event.ctrlKey);
+                var params = [event.which, event.shiftKey, event.ctrlKey];
                 // Enqueue this interrupt on the kernel interrupt queue so that it gets to the Interrupt handler.
                 _KernelInterruptQueue.enqueue(new Interrupt(KEYBOARD_IRQ, params));
             }
+        }
+
+        public static hostStoreProgramOnDisk(pid: number, program: number[]): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_WRITE_PROGRAM, pid, program];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
+        public static hostLoadProgramFromDisk(pid: number): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_READ_PROGRAM, pid];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
+        public static hostDeleteProgramFromDisk(pid: number): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_DELETE_PROGRAM, pid];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
+        public static hostCreateFileOnDisk(filename: string): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_CREATE_FILE, filename];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
+        public static hostReadFileFromDisk(filename: string): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_READ_FILE, filename];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
+        public static hostWriteFileToDisk(filename: string, file: string): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_WRITE_FILE, filename, file];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
+        public static hostDeleteFileFromDisk(filename: string): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_DELETE_FILE, filename];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
+        public static hostFormatDisk(): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
         }
     }
 }

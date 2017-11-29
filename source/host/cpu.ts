@@ -212,7 +212,7 @@ module TSOS {
             Acc should be 00
              */
             if (this.Zflag === 0) {
-                this.PC = (this.PC + Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit)) % SEGMENT_SIZE;
+                this.PC = (this.PC + Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit)) % MEMORY_SEGMENT_SIZE;
             }
         }
 
@@ -237,7 +237,7 @@ module TSOS {
             if (this.Xreg == 0x1) {
                _KernelInterruptQueue.enqueue(new Interrupt(SYSCALL_IRQ, this.Yreg.toString()));
            } else if (this.Xreg == 0x2) {
-                var memory = Mmu.getBytesAtLogicalAddress(this.Yreg,SEGMENT_SIZE-this.Yreg-1, this.base, this.limit);
+                var memory = Mmu.getBytesAtLogicalAddress(this.Yreg,MEMORY_SEGMENT_SIZE-this.Yreg-1, this.base, this.limit);
                 var output = "";
                  for (var i = 0; i < memory.length; i++) {
                      if (memory[i] === 0x0) { break; }

@@ -184,7 +184,7 @@ var TSOS;
             Acc should be 00
              */
             if (this.Zflag === 0) {
-                this.PC = (this.PC + TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit)) % SEGMENT_SIZE;
+                this.PC = (this.PC + TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit)) % MEMORY_SEGMENT_SIZE;
             }
         }
         incrementByte() {
@@ -208,7 +208,7 @@ var TSOS;
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(SYSCALL_IRQ, this.Yreg.toString()));
             }
             else if (this.Xreg == 0x2) {
-                var memory = TSOS.Mmu.getBytesAtLogicalAddress(this.Yreg, SEGMENT_SIZE - this.Yreg - 1, this.base, this.limit);
+                var memory = TSOS.Mmu.getBytesAtLogicalAddress(this.Yreg, MEMORY_SEGMENT_SIZE - this.Yreg - 1, this.base, this.limit);
                 var output = "";
                 for (var i = 0; i < memory.length; i++) {
                     if (memory[i] === 0x0) {

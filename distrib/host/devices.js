@@ -53,10 +53,42 @@ var TSOS;
             if (event.target.id === "display") {
                 event.preventDefault();
                 // Note the pressed key code in the params (Mozilla-specific).
-                var params = new Array(event.which, event.shiftKey, event.ctrlKey);
+                var params = [event.which, event.shiftKey, event.ctrlKey];
                 // Enqueue this interrupt on the kernel interrupt queue so that it gets to the Interrupt handler.
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(KEYBOARD_IRQ, params));
             }
+        }
+        static hostStoreProgramOnDisk(pid, program) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_WRITE_PROGRAM, pid, program];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
+        static hostLoadProgramFromDisk(pid) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_READ_PROGRAM, pid];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
+        static hostDeleteProgramFromDisk(pid) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_DELETE_PROGRAM, pid];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
+        static hostCreateFileOnDisk(filename) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_CREATE_FILE, filename];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
+        static hostReadFileFromDisk(filename) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_READ_FILE, filename];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
+        static hostWriteFileToDisk(filename, file) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_WRITE_FILE, filename, file];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
+        static hostDeleteFileFromDisk(filename) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_DELETE_FILE, filename];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
+        static hostFormatDisk() {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
         }
     }
     TSOS.Devices = Devices;

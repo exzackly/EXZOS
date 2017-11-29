@@ -35,21 +35,27 @@ module TSOS {
             _StdOut = _Console;
 
             // Load the Keyboard Device Driver
-            this.krnTrace("Loading the keyboard device driver.");
+            this.krnTrace("Loading the keyboard device driver");
             _krnKeyboardDriver = new DeviceDriverKeyboard();     // Construct it.
             _krnKeyboardDriver.driverEntry();                    // Call the driverEntry() initialization routine.
-            this.krnTrace(_krnKeyboardDriver.status);
+            this.krnTrace(`Keyboard device driver ${_krnKeyboardDriver.status}`);
+
+            // Load the Disk Device Driver
+            this.krnTrace("Loading the disk device driver");
+            _krnDiskDriver = new DeviceDriverDisk();        // Construct it.
+            _krnDiskDriver.driverEntry();                   // Call the driverEntry() initialization routine.
+            this.krnTrace(`Disk device driver ${_krnDiskDriver.status}`);
 
             //
             // ... more?
             //
 
             // Enable the OS Interrupts.  (Not the CPU clock interrupt, as that is done in the hardware sim.)
-            this.krnTrace("Enabling the interrupts.");
+            this.krnTrace("Enabling the interrupts");
             this.krnEnableInterrupts();
 
             // Launch the shell.
-            this.krnTrace("Creating and Launching the shell.");
+            this.krnTrace("Creating and Launching the shell");
             _OsShell = new Shell();
 
             // Finally, initiate student testing protocol.
@@ -59,20 +65,20 @@ module TSOS {
         }
 
         public krnShutdown() {
-            this.krnTrace("begin shutdown OS");
+            this.krnTrace("Begin shutdown OS");
             // Terminate all running processes
             var processes = _Scheduler.residentList;
             for (var i = 0; i < processes.length; i++) {
                 _Scheduler.terminateProcess(processes[i].pid);
             }
             // ... Disable the Interrupts.
-            this.krnTrace("Disabling the interrupts.");
+            this.krnTrace("Disabling the interrupts");
             this.krnDisableInterrupts();
             //
             // Unload the Device Drivers?
             // More?
             //
-            this.krnTrace("end shutdown OS");
+            this.krnTrace("End shutdown OS");
         }
 
 
@@ -127,6 +133,9 @@ module TSOS {
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params);   // Kernel mode device driver
                     _StdIn.handleInput();
+                    break;
+                case DISK_IRQ:
+                    _krnDiskDriver.isr(params);   // Kernel mode device driver
                     break;
                 case SYSCALL_IRQ:
                     _StdOut.putText(params);
