@@ -13,11 +13,26 @@
 
 module TSOS {
 
+    export enum SchedulingType {
+        roundRobin = "Round robin",
+        firstComeFirstServe = "First come first serve",
+        priority = "Priority"
+    }
+
     export class Scheduler {
 
         constructor(public residentList: Pcb[] = [],
                     public readyQueue: number[] = [], // ready queue contains PID values; PCBs stored in resident list
+                    public schedulingType: SchedulingType = SchedulingType.roundRobin,
                     public quantum: number = _SchedulerQuantum) {
+        }
+
+        public sortResidentList(): void {
+            if (this.schedulingType === SchedulingType.priority) { // Sort by priority if scheduling algorithm
+                this.residentList.sort((x, y) => x.priority - y.priority);
+            } else { // Sort by pid otherwise
+                this.residentList.sort((x, y) => x.pid - y.pid);
+            }
         }
 
         public terminateProcess(pid: number): void {
@@ -54,6 +69,17 @@ module TSOS {
                     this.quantum = _SchedulerQuantum; // Reset quantum
                 }
             }
+        }
+
+        public setSchedule(type: SchedulingType): void {
+            this.schedulingType = type;
+            if (type === SchedulingType.roundRobin) {
+                _SchedulerQuantum = 6; // Reset to default quantum
+            } else if (type === SchedulingType.firstComeFirstServe || type === SchedulingType.priority) {
+                _SchedulerQuantum = Number.MAX_SAFE_INTEGER;
+            }
+            this.sortResidentList(); // Resort resident list based on new scheduling type
+            Control.hostUpdateDisplayProcesses();
         }
 
         public updateStatistics(): void {

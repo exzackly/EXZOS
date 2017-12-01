@@ -115,7 +115,7 @@ module TSOS {
         public krnKbdDriverEntry() {
             // Initialization routine for this, the kernel-mode Keyboard Device Driver.
             this.status = "loaded";
-            this.format();
+            this.format(true);
             Control.hostUpdateDisplayDisk();
         }
 
@@ -211,13 +211,12 @@ module TSOS {
         }
 
         // Iterates all locations on disk. Takes an action lambda function of what to do with each location
-        public iterateDisk(trackLocationStart: number, trackLocationEnd: number, action: (data: DiskData) => DiskLocation): DiskLocation {
+        public iterateDisk(trackLocationStart: number, trackLocationEnd: number, action: (location: DiskLocation) => DiskLocation): DiskLocation {
             for (var track = trackLocationStart; track < trackLocationEnd; track++) {
                 for (var sector = 0; sector < DISK_SECTOR_COUNT; sector++) {
                     for (var block = 0; block < DISK_BLOCK_COUNT; block++) {
                         var location = new DiskLocation(track, sector, block);
-                        var data = new DiskData(location);
-                        var res = action(data); // Functional programming is cool
+                        var res = action(location); // Functional programming is cool
                         if (res !== null) {
                             return res;
                         }
@@ -366,7 +365,8 @@ module TSOS {
                 trackLocationStart = 1;
                 trackLocationEnd = DISK_TRACK_COUNT;
             }
-            var action = (data: DiskData): DiskLocation => { // Lambda function to determine and return unused location
+            var action = (location: DiskLocation): DiskLocation => { // Lambda function to determine and return unused location
+                var data = new DiskData(location)
                 if (data.isUsed() === false) {
                     data.setUsed();
                     return data.location;
@@ -377,7 +377,8 @@ module TSOS {
         }
 
         public locationForFilename(filename: string): DiskLocation {
-            var action = (data: DiskData): DiskLocation => { // Lambda function to determine location for filename
+            var action = (location: DiskLocation): DiskLocation => { // Lambda function to determine location for filename
+                var data = new DiskData(location);
                 if (data.location.sector === 0 && data.location.block === 0) { // Skip MBR; cannot change starting point to 0, as needed (e.g. 0:1:0)
                     return null;
                 }
@@ -393,8 +394,12 @@ module TSOS {
             return this.iterateDisk(0, 1, action); // Functional programming is cool
         }
 
-        public format(): void {
-            var action = (data: DiskData): DiskLocation => { // Lambda function to zero each data block
+        public format(initialize: boolean = false): void {
+            var action = (location: DiskLocation): DiskLocation => { // Lambda function to zero each data block
+                if (initialize === true) {
+                    _Disk.initializeBlock(location);
+                }
+                var data = new DiskData(location);
                 data.zero();
                 return null;
             };
@@ -407,7 +412,8 @@ module TSOS {
 
         public getFiles(type: LSType): string[] {
             var files: string[] = [];
-            var action = (data: DiskData): DiskLocation => { // Lambda function to aggregate files
+            var action = (location: DiskLocation): DiskLocation => { // Lambda function to aggregate files
+                var data = new DiskData(location);
                 if (data.location.sector === 0 && data.location.block === 0) { // Skip MBR; cannot change starting point to 0, as needed (e.g. 0:1:0)
                     return null;
                 }

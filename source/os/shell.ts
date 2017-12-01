@@ -36,7 +36,7 @@ module TSOS {
             "procrastinate": {desc: "- Execute standard workflow. Persistence is key...", fn: this.shellProcrastinate},
             "status": {desc: "<string> - Sets the status in the taskbar.", fn: this.shellStatus},
             "erupt": {desc: "- Pompeii.", fn: this.shellErupt},
-            "load": {desc: "- Loads program from User Program Input.", fn: this.shellLoad},
+            "load": {desc: "<priority?> - Loads program from User Program Input. Optionally specify priority", fn: this.shellLoad},
             "run": {desc: "<pid> - Runs program with specified PID.", fn: this.shellRun},
             "ps": {desc: "- Displays a list of the running processes and their IDs.", fn: this.shellPs},
             "kill": {desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill},
@@ -48,7 +48,9 @@ module TSOS {
             "write": {desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename", fn: this.shellWrite},
             "delete": {desc: "<filename> - Deletes file with specified filename.", fn: this.shellDelete},
             "format": {desc: "- Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat},
-            "ls": {desc: "- Lists the files currently stored on the disk.", fn: this.shellLs}
+            "ls": {desc: "- Lists the files currently stored on the disk.", fn: this.shellLs},
+            "setschedule": {desc: "<rr | fcfs | priority> - Sets the CPU scheduling algorithm.", fn: this.shellSetSchedule},
+            "getschedule": {desc: "- Displays the CPU scheduling algorithm in use.", fn: this.shellGetSchedule}
         };
 
         public putPrompt(): void {
@@ -241,7 +243,15 @@ module TSOS {
         }
 
         public shellLoad(args): void {
-            var pid = Control.hostLoad(); // Have Control verify and load program
+            var priority = 0;
+            if (args.length > 0) { // Pass along specified priority. Default to 0 if none specified
+                if (isNaN(parseInt(args[0])) || parseInt(args[0]) < 0) {
+                    _StdOut.putText("Usage: load <priority?>  Please supply a valid positive integer priority greater than 0.");
+                    return;
+                }
+                priority = parseInt(args[0]);
+            }
+            var pid = Control.hostLoad(priority); // Have Control verify and load program
             if (pid === -1) {  // pid value of -1 denotes invalid program
                 _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z");
             } else if (pid === -2) {  // pid value of -2 denotes insufficient memory
@@ -307,7 +317,9 @@ module TSOS {
         }
 
         public shellQuantum(args): void {
-            if (args.length > 0 && !isNaN(parseInt(args[0])) && parseInt(args[0]) > 0) {
+            if (_Scheduler.schedulingType !== SchedulingType.roundRobin) {
+                _StdOut.putText("Scheduling algorithm must be set to round robin to set quantum.");
+            } else if (args.length > 0 && !isNaN(parseInt(args[0])) && parseInt(args[0]) > 0) {
                 _SchedulerQuantum = parseInt(args[0]);
                 _StdOut.putText("Round robin quantum set to " + args[0] + ".");
             } else {
@@ -366,5 +378,29 @@ module TSOS {
             }
         }
 
+        public shellSetSchedule(args): void {
+            if (args.length > 0) {
+                if (args[0] === "rr") {
+                    _Scheduler.setSchedule(SchedulingType.roundRobin);
+                    _StdOut.putText("Scheduling algorithm set to round robin.");
+                } else if (args[0] === "fcfs") {
+                    _Scheduler.setSchedule(SchedulingType.firstComeFirstServe);
+                    _StdOut.putText("Scheduling algorithm set to first come first serve.");
+                } else if (args[0] === "priority") {
+                    _Scheduler.setSchedule(SchedulingType.priority);
+                    _StdOut.putText("Scheduling algorithm set to priority.");
+                } else {
+                    _StdOut.putText("Usage: setschedule <rr | fcfs | priority>  Please supply a valid scheduling option.");
+                }
+            } else {
+                _StdOut.putText("Usage: setschedule <rr | fcfs | priority>  Please supply a valid scheduling option.");
+            }
+        }
+
+        public shellGetSchedule(args): void {
+            _StdOut.putText(_Scheduler.schedulingType);
+        }
+
     }
+
 }

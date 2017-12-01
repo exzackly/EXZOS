@@ -55,7 +55,7 @@ var TSOS;
             }
             _Memory.zeroBytes(0, MEMORY_SEGMENT_SIZE * MEMORY_SEGMENT_COUNT);
         }
-        static createNewProcess(program) {
+        static createNewProcess(priority, program) {
             // Create PCB for new process
             var pid = this.pidIncrementor;
             var base = Mmu.determineBase(pid);
@@ -63,9 +63,8 @@ var TSOS;
             //return -2; // Return value of -2 denotes insufficient memory
             this.pidIncrementor += 1; // Increment for next process
             var limit = base !== -1 ? base + MEMORY_SEGMENT_SIZE : -1;
-            var priority = 0;
-            //todo: support variable priority in project 4
             _Scheduler.residentList.push(new TSOS.Pcb(pid, base, limit, priority));
+            _Scheduler.sortResidentList();
             // Store program...
             var prog = program.map(x => TSOS.Utils.fromHex(x)); // Convert program from hex to decimal
             if (base !== -1) {

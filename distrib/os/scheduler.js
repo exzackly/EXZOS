@@ -11,12 +11,27 @@
      ------------ */
 var TSOS;
 (function (TSOS) {
+    let SchedulingType;
+    (function (SchedulingType) {
+        SchedulingType["roundRobin"] = "Round robin";
+        SchedulingType["firstComeFirstServe"] = "First come first serve";
+        SchedulingType["priority"] = "Priority";
+    })(SchedulingType = TSOS.SchedulingType || (TSOS.SchedulingType = {}));
     class Scheduler {
         constructor(residentList = [], readyQueue = [], // ready queue contains PID values; PCBs stored in resident list
-            quantum = _SchedulerQuantum) {
+            schedulingType = SchedulingType.roundRobin, quantum = _SchedulerQuantum) {
             this.residentList = residentList;
             this.readyQueue = readyQueue;
+            this.schedulingType = schedulingType;
             this.quantum = quantum;
+        }
+        sortResidentList() {
+            if (this.schedulingType === SchedulingType.priority) {
+                this.residentList.sort((x, y) => x.priority - y.priority);
+            }
+            else {
+                this.residentList.sort((x, y) => x.pid - y.pid);
+            }
         }
         terminateProcess(pid) {
             if (_CPU.pid === pid) {
@@ -53,6 +68,17 @@ var TSOS;
                     this.quantum = _SchedulerQuantum; // Reset quantum
                 }
             }
+        }
+        setSchedule(type) {
+            this.schedulingType = type;
+            if (type === SchedulingType.roundRobin) {
+                _SchedulerQuantum = 6; // Reset to default quantum
+            }
+            else if (type === SchedulingType.firstComeFirstServe || type === SchedulingType.priority) {
+                _SchedulerQuantum = Number.MAX_SAFE_INTEGER;
+            }
+            this.sortResidentList(); // Resort resident list based on new scheduling type
+            TSOS.Control.hostUpdateDisplayProcesses();
         }
         updateStatistics() {
             for (var i = 0; i < this.readyQueue.length; i++) {

@@ -45,6 +45,10 @@ module TSOS {
             return data;
         }
 
+        public initializeBlock(location: DiskLocation): void {
+            localStorage.setItem(location.key(), "00");
+        }
+
     }
 
 }

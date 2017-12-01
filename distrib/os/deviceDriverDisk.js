@@ -81,7 +81,7 @@ var TSOS;
         krnKbdDriverEntry() {
             // Initialization routine for this, the kernel-mode Keyboard Device Driver.
             this.status = "loaded";
-            this.format();
+            this.format(true);
             TSOS.Control.hostUpdateDisplayDisk();
         }
         krnDiskHandleRequest(params) {
@@ -185,8 +185,7 @@ var TSOS;
                 for (var sector = 0; sector < DISK_SECTOR_COUNT; sector++) {
                     for (var block = 0; block < DISK_BLOCK_COUNT; block++) {
                         var location = new TSOS.DiskLocation(track, sector, block);
-                        var data = new DiskData(location);
-                        var res = action(data); // Functional programming is cool
+                        var res = action(location); // Functional programming is cool
                         if (res !== null) {
                             return res;
                         }
@@ -325,7 +324,8 @@ var TSOS;
                 trackLocationStart = 1;
                 trackLocationEnd = DISK_TRACK_COUNT;
             }
-            var action = (data) => {
+            var action = (location) => {
+                var data = new DiskData(location);
                 if (data.isUsed() === false) {
                     data.setUsed();
                     return data.location;
@@ -335,7 +335,8 @@ var TSOS;
             return this.iterateDisk(trackLocationStart, trackLocationEnd, action); // Functional programming is cool
         }
         locationForFilename(filename) {
-            var action = (data) => {
+            var action = (location) => {
+                var data = new DiskData(location);
                 if (data.location.sector === 0 && data.location.block === 0) {
                     return null;
                 }
@@ -350,8 +351,12 @@ var TSOS;
             };
             return this.iterateDisk(0, 1, action); // Functional programming is cool
         }
-        format() {
-            var action = (data) => {
+        format(initialize = false) {
+            var action = (location) => {
+                if (initialize === true) {
+                    _Disk.initializeBlock(location);
+                }
+                var data = new DiskData(location);
                 data.zero();
                 return null;
             };
@@ -363,7 +368,8 @@ var TSOS;
         }
         getFiles(type) {
             var files = [];
-            var action = (data) => {
+            var action = (location) => {
+                var data = new DiskData(location);
                 if (data.location.sector === 0 && data.location.block === 0) {
                     return null;
                 }

@@ -36,6 +36,9 @@ var TSOS;
             var data = hexDataArray.map(x => TSOS.Utils.fromHex(x)); // Convert program from hex to decimal
             return data;
         }
+        initializeBlock(location) {
+            localStorage.setItem(location.key(), "00");
+        }
     }
     TSOS.Disk = Disk;
 })(TSOS || (TSOS = {}));

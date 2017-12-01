@@ -102,7 +102,7 @@ var TSOS;
             // Unhide error message
             document.getElementById("errorMessage").style.display = "inline";
         }
-        static hostLoad() {
+        static hostLoad(priority) {
             // Grab text from taProgramInput
             var program = document.getElementById("taProgramInput").value;
             program = program.replace(/\s+/g, ""); // Remove whitespace
@@ -116,7 +116,7 @@ var TSOS;
             }
             else {
                 var progArray = program.match(/.{2}/g); // Break program into array of length 2 hex codes
-                return TSOS.Mmu.createNewProcess(progArray); // Pass to Mmu to finish load and assign PID
+                return TSOS.Mmu.createNewProcess(priority, progArray); // Pass to Mmu to finish load and assign PID
             }
         }
         static hostUpdateDisplay() {

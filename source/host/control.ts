@@ -120,7 +120,7 @@ module TSOS {
             (<HTMLImageElement>document.getElementById("errorMessage")).style.display = "inline";
         }
 
-        public static hostLoad(): number {
+        public static hostLoad(priority: number): number {
             // Grab text from taProgramInput
             var program = (<HTMLInputElement> document.getElementById("taProgramInput")).value;
             program = program.replace(/\s+/g, ""); // Remove whitespace
@@ -133,7 +133,7 @@ module TSOS {
                 return -1; // Return value of -1 denotes invalid program
             } else {
                 var progArray = program.match(/.{2}/g); // Break program into array of length 2 hex codes
-                return Mmu.createNewProcess(progArray); // Pass to Mmu to finish load and assign PID
+                return Mmu.createNewProcess(priority, progArray); // Pass to Mmu to finish load and assign PID
             }
         }
 
