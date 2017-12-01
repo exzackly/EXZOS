@@ -75,6 +75,11 @@ module TSOS {
         FileSearch
     }
 
+    export enum LSType {
+        Normal,
+        Long
+    }
+
     // Extends DeviceDriver
     export class DeviceDriverDisk extends DeviceDriver {
 
@@ -88,10 +93,13 @@ module TSOS {
         public static DEVICE_DRIVER_DISK_DELETE_FILE: number = 7;
 
         public static DEVICE_DRIVER_DISK_FORMAT: number = 8;
+        public static DEVICE_DRIVER_DISK_LS: number = 9;
 
         private static DEVICE_DRIVER_DISK_PROGRAM_PREFIX: string = "~";
-        //todo: implement hidden files
         private static DEVICE_DRIVER_DISK_HIDDEN_FILE_PREFIX: string = ".";
+        private static DEVICE_DRIVER_DISK_SIZE_AND_DATE_INFIX: string = String.fromCharCode(31); // ASCII unit separator
+
+        public static DEVICE_DRIVER_DISK_MAX_FILENAME_SIZE: number = 32;
 
         constructor() {
             // Override the base method pointers.
@@ -139,7 +147,9 @@ module TSOS {
                     }
                     break;
                 case DeviceDriverDisk.DEVICE_DRIVER_DISK_CREATE_FILE:
-                    if (this.createOnDisk(params[1]) !== null) {
+                    if (!params[1].startsWith(DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX) &&
+                        !params[1].includes(DeviceDriverDisk.DEVICE_DRIVER_DISK_SIZE_AND_DATE_INFIX) &&
+                        this.createOnDisk(params[1]) !== null) {
                         _StdOut.putText(`File ${params[1]} successfully created.`);
                     } else {
                         _StdOut.putText(`Error: file ${params[1]} could not be created.`);
@@ -178,6 +188,19 @@ module TSOS {
                 case DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT:
                     this.format();
                     _StdOut.putText("Disk successfully formatted.");
+                    _StdOut.advanceLine();
+                    _OsShell.putPrompt();
+                    break;
+                case DeviceDriverDisk.DEVICE_DRIVER_DISK_LS:
+                    var files = this.getFiles(params[1]);
+                    if (files.length === 0) {
+                        _StdOut.putText("No files on disk.");
+                    } else {
+                        for (var i = 0; i < files.length; i++) {
+                            _StdOut.advanceLine();
+                            _StdOut.putText(files[i]);
+                        }
+                    }
                     _StdOut.advanceLine();
                     _OsShell.putPrompt();
                     break;
@@ -248,6 +271,9 @@ module TSOS {
         }
 
         public createOnDisk(filename: string): DiskLocation {
+            if (filename.length > DeviceDriverDisk.DEVICE_DRIVER_DISK_MAX_FILENAME_SIZE) {
+                return null; // Filename larger than max
+            }
             if (this.locationForFilename(filename) !== null) {
                 return null; // File with specified filename already exists
             }
@@ -257,7 +283,9 @@ module TSOS {
             }
             var data = new DiskData(location);
             data.setUsed();
-            data.setWritableData(Utils.toHexArray(filename)); // Write file name to directory data
+            var createDate = new Date(Date.now()).toLocaleString();
+            var newDirectoryData = this.createFileDirectoryData(filename, 0, createDate);
+            data.setWritableData(newDirectoryData);
             return location;
         }
 
@@ -299,6 +327,9 @@ module TSOS {
             // Write directory block
             var data = new DiskData(directoryLocation);
             data.setNextLocation(locations[0]);
+            var oldDirectoryData = this.parseFileDirectoryData(data.writableChunk());
+            var newDirectoryData = this.createFileDirectoryData(oldDirectoryData[0], file.length, oldDirectoryData[2]);
+            data.setWritableData(newDirectoryData);
             // Write data blocks
             for (var i = 0; i < locations.length; i++) {
                 var nextLocation = i + 1 < locations.length ? locations[i + 1] : new DiskLocation(0, 0, 0); // Last location has "next" of 0:0:0
@@ -347,13 +378,14 @@ module TSOS {
 
         public locationForFilename(filename: string): DiskLocation {
             var action = (data: DiskData): DiskLocation => { // Lambda function to determine location for filename
-                if (data.location.sector === 0 && data.location.block === 0) {
+                if (data.location.sector === 0 && data.location.block === 0) { // Skip MBR; cannot change starting point to 0, as needed (e.g. 0:1:0)
                     return null;
-                } // Cannot change starting point to 0; needed (e.g. 0:1:0)
+                }
                 if (data.isUsed() === false) {
                     return null; // Block is unused; skip
                 }
-                if (Utils.fromHexArray(data.writableChunk()) === filename) {
+                var directoryData = this.parseFileDirectoryData(data.writableChunk());
+                if (directoryData[0] === filename) {
                     return data.location;
                 }
                 return null;
@@ -371,6 +403,46 @@ module TSOS {
             var MBRData = new DiskData(DiskLocation.MBR_LOCATION);
             MBRData.setUsed();
             MBRData.setWritableData([0, 0, 1, 1, 0, 0]);
+        }
+
+        public getFiles(type: LSType): string[] {
+            var files: string[] = [];
+            var action = (data: DiskData): DiskLocation => { // Lambda function to aggregate files
+                if (data.location.sector === 0 && data.location.block === 0) { // Skip MBR; cannot change starting point to 0, as needed (e.g. 0:1:0)
+                    return null;
+                }
+                if (data.isUsed() === false) {
+                    return null; // Block is unused; skip
+                }
+                var directoryData = this.parseFileDirectoryData(data.writableChunk());
+                if (type === LSType.Normal) {
+                    if (!directoryData[0].startsWith(DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX) &&
+                        !directoryData[0].startsWith(DeviceDriverDisk.DEVICE_DRIVER_DISK_HIDDEN_FILE_PREFIX)) { // Filter out hidden files
+                        files.push(directoryData[0]);
+                    }
+                } else if (type === LSType.Long) {
+                    files.push(directoryData.join(" "));
+                }
+                return null;
+            };
+            this.iterateDisk(0, 1, action); // Functional programming is cool
+            return files;
+        }
+
+        public parseFileDirectoryData(data: number[]): string[] {
+            var directoryData = Utils.fromHexArray(data).split(DeviceDriverDisk.DEVICE_DRIVER_DISK_SIZE_AND_DATE_INFIX);
+            if (directoryData.length === 3) {
+                return [directoryData[0], directoryData[1], directoryData[2]]
+            } else { // Something went wrong; provide default values with filename
+                var date = new Date(Date.now()).toLocaleString();
+                return [directoryData.join(""), "0", date];
+            }
+        }
+
+        public createFileDirectoryData(filename: string, size: number, date: string): number[] {
+            var newDirectoryData = filename + DeviceDriverDisk.DEVICE_DRIVER_DISK_SIZE_AND_DATE_INFIX +
+                size + DeviceDriverDisk.DEVICE_DRIVER_DISK_SIZE_AND_DATE_INFIX + date;
+            return Utils.toHexArray(newDirectoryData);
         }
 
     }

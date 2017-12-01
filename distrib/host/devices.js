@@ -90,6 +90,10 @@ var TSOS;
             var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT];
             _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
         }
+        static hostListFilesOnDisk(type) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_LS, type];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
     }
     TSOS.Devices = Devices;
 })(TSOS || (TSOS = {}));

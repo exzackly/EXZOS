@@ -41,7 +41,8 @@ var TSOS;
                 "read": { desc: "<filename> - Displays the contents of file with specified filename.", fn: this.shellRead },
                 "write": { desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename", fn: this.shellWrite },
                 "delete": { desc: "<filename> - Deletes file with specified filename.", fn: this.shellDelete },
-                "format": { desc: "- Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat }
+                "format": { desc: "- Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat },
+                "ls": { desc: "- Lists the files currently stored on the disk.", fn: this.shellLs }
             };
             this.putPrompt();
         }
@@ -338,6 +339,14 @@ var TSOS;
         }
         shellFormat(args) {
             TSOS.Devices.hostFormatDisk();
+        }
+        shellLs(args) {
+            if (args.length > 0 && args[0] === "-l") {
+                TSOS.Devices.hostListFilesOnDisk(TSOS.LSType.Long);
+            }
+            else {
+                TSOS.Devices.hostListFilesOnDisk(TSOS.LSType.Normal);
+            }
         }
     }
     TSOS.Shell = Shell;

@@ -105,5 +105,12 @@ module TSOS {
             var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT];
             _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
         }
+
+        public static hostListFilesOnDisk(type: LSType): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_LS, type];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
     }
+
 }
