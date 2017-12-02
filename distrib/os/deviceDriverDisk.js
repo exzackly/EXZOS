@@ -220,11 +220,12 @@ var TSOS;
             _Kernel.krnTrace(`Roll in PID ${pid}`);
             var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
             var process = _Scheduler.getProcessForPid(pid);
-            var program = this.retrieveFromDisk(filename).slice(0, MEMORY_SEGMENT_SIZE); // Truncate file to segment size
+            var program = this.retrieveFromDisk(filename);
             this.removeProgramFromDisk(pid);
             if (program === null) {
                 return false;
             }
+            program = program.slice(0, MEMORY_SEGMENT_SIZE); // Truncate file to segment size
             TSOS.Mmu.zeroBytesWithBaseAndLimit(process.base, process.limit); // Zero memory
             TSOS.Mmu.setBytesAtLogicalAddress(0, program, process.base, process.limit); // Load program into memory segment
             return true;

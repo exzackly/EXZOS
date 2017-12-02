@@ -263,7 +263,7 @@ var TSOS;
             var processes = _Scheduler.residentList;
             for (var i = 0; i < processes.length; i++) {
                 var process = processes[i];
-                var state = _Scheduler.readyQueue[0] == process.pid ? "Executing" : "Ready";
+                var state = _Scheduler.readyQueue.peek() == process.pid ? "Executing" : "Ready";
                 var location = process.base !== -1 ? "Memory" : "Disk";
                 _StdOut.putText(process.pid + " " + state + " " + location);
                 _StdOut.advanceLine();
@@ -351,6 +351,10 @@ var TSOS;
             }
         }
         shellFormat(args) {
+            if (_CPU.isExecuting === true) {
+                _StdOut.putText("Cannot format. Please wait until all running processes are completed.");
+                return;
+            }
             TSOS.Devices.hostFormatDisk();
         }
         shellLs(args) {

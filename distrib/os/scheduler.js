@@ -18,7 +18,7 @@ var TSOS;
         SchedulingType["priority"] = "Priority";
     })(SchedulingType = TSOS.SchedulingType || (TSOS.SchedulingType = {}));
     class Scheduler {
-        constructor(residentList = [], readyQueue = [], // ready queue contains PID values; PCBs stored in resident list
+        constructor(residentList = [], readyQueue = new TSOS.Queue(), // ready queue contains PID values; PCBs stored in resident list
             schedulingType = SchedulingType.roundRobin, quantum = _SchedulerQuantum) {
             this.residentList = residentList;
             this.readyQueue = readyQueue;
@@ -39,7 +39,7 @@ var TSOS;
             }
             TSOS.Mmu.terminateProcess(this.getProcessForPid(pid));
             this.removeProcess(pid); // Remove process from resident list and ready queue
-            if (this.readyQueue.length > 0) {
+            if (!this.readyQueue.isEmpty()) {
                 this.loadFirstProcessInReadyQueue();
             }
             TSOS.Control.hostUpdateDisplay(); // Update display
@@ -49,11 +49,11 @@ var TSOS;
             if (process === null) {
                 return -1; // Return value -1 indicates process not found
             }
-            else if (this.readyQueue.length > 0) {
+            else if (!this.readyQueue.isEmpty()) {
                 return -2; // Return value -2 indicates processes already running
             }
             else {
-                this.readyQueue.push(process.pid);
+                this.readyQueue.enqueue(process.pid);
                 this.loadFirstProcessInReadyQueue();
                 return 0;
             }
@@ -61,7 +61,7 @@ var TSOS;
         cpuDidCycle() {
             this.quantum--;
             if (this.quantum === 0) {
-                if (this.readyQueue.length > 1) {
+                if (this.readyQueue.getSize() > 1) {
                     _KernelInterruptQueue.enqueue(new TSOS.Interrupt(CONTEXT_SWITCH_IRQ, null));
                 }
                 else {
@@ -81,8 +81,8 @@ var TSOS;
             TSOS.Control.hostUpdateDisplayProcesses();
         }
         updateStatistics() {
-            for (var i = 0; i < this.readyQueue.length; i++) {
-                var process = this.getProcessForPid(this.readyQueue[i]);
+            for (var i = 0; i < this.readyQueue.getSize(); i++) {
+                var process = this.getProcessForPid(this.readyQueue.q[i]);
                 if (i === 0) {
                     process.executeCycles++;
                 }
@@ -92,24 +92,24 @@ var TSOS;
             }
         }
         executeNextInReadyQueue() {
-            if (this.readyQueue.length > 1) {
-                var oldProcessPID = this.readyQueue.shift(); // Remove and stash first element
+            if (this.readyQueue.getSize() > 1) {
+                var oldProcessPID = this.readyQueue.dequeue(); // Remove and stash first element
                 var oldProcess = this.getProcessForPid(oldProcessPID);
                 _CPU.storeProcess(oldProcess); // Store state of process
-                this.readyQueue.push(oldProcessPID); // Send process to end of ready queue
+                this.readyQueue.enqueue(oldProcessPID); // Send process to end of ready queue
                 return this.loadFirstProcessInReadyQueue();
             }
         }
         loadFirstProcessInReadyQueue() {
             this.quantum = _SchedulerQuantum; // Reset quantum
-            if (this.readyQueue.length > 0) {
-                var process = this.getProcessForPid(this.readyQueue[0]); // Get process for first element in ready queue
+            if (!this.readyQueue.isEmpty()) {
+                var process = this.getProcessForPid(this.readyQueue.peek()); // Get process for first element in ready queue
                 if (process.base == -1 || process.limit == -1) {
-                    if (_CPU.isExecuting === true && this.readyQueue.length > MEMORY_SEGMENT_COUNT) {
-                        var lastPIDInReadyQueue = this.readyQueue[this.readyQueue.length - 1]; // Roll out last process in ready queue
+                    if (_CPU.isExecuting === true && this.readyQueue.getSize() > MEMORY_SEGMENT_COUNT) {
+                        var lastPIDInReadyQueue = this.readyQueue.q[this.readyQueue.getSize() - 1]; // Roll out last process in ready queue
                         TSOS.Mmu.rollOutProcessToDisk(lastPIDInReadyQueue);
                     }
-                    TSOS.Mmu.rollInProcessFromDisk(this.readyQueue[0]); // Roll in process to be run
+                    TSOS.Mmu.rollInProcessFromDisk(this.readyQueue.peek()); // Roll in process to be run
                 }
                 _CPU.loadProcess(process); // Load process onto CPU
                 TSOS.Control.hostUpdateDisplay();
@@ -120,11 +120,11 @@ var TSOS;
             if (this.residentList.length === 0) {
                 return -1;
             } // Return value -1 indicates nothing to run
-            else if (this.readyQueue.length > 0) {
+            else if (!this.readyQueue.isEmpty()) {
                 return -2;
             } // Return value -2 indicates processes already running
             for (var i = 0; i < this.residentList.length; i++) {
-                this.readyQueue.push(this.residentList[i].pid);
+                this.readyQueue.enqueue(this.residentList[i].pid);
             }
             this.loadFirstProcessInReadyQueue();
             return 0;
@@ -138,9 +138,9 @@ var TSOS;
             return null;
         }
         removeProcess(pid) {
-            for (var i = 0; i < this.readyQueue.length; i++) {
-                if (this.readyQueue[i] === pid) {
-                    this.readyQueue.splice(i, 1);
+            for (var i = 0; i < this.readyQueue.getSize(); i++) {
+                if (this.readyQueue.q[i] === pid) {
+                    this.readyQueue.q.splice(i, 1);
                 }
             }
             for (var i = 0; i < this.residentList.length; i++) {

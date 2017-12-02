@@ -22,7 +22,7 @@ module TSOS {
     export class Scheduler {
 
         constructor(public residentList: Pcb[] = [],
-                    public readyQueue: number[] = [], // ready queue contains PID values; PCBs stored in resident list
+                    public readyQueue: Queue = new Queue(), // ready queue contains PID values; PCBs stored in resident list
                     public schedulingType: SchedulingType = SchedulingType.roundRobin,
                     public quantum: number = _SchedulerQuantum) {
         }
@@ -41,7 +41,7 @@ module TSOS {
             }
             Mmu.terminateProcess(this.getProcessForPid(pid));
             this.removeProcess(pid); // Remove process from resident list and ready queue
-            if (this.readyQueue.length > 0) { // Load next running process if there is one
+            if (!this.readyQueue.isEmpty()) { // Load next running process if there is one
                 this.loadFirstProcessInReadyQueue();
             }
             Control.hostUpdateDisplay(); // Update display
@@ -51,10 +51,10 @@ module TSOS {
             var process = this.getProcessForPid(pid);
             if (process === null) {
                 return -1; // Return value -1 indicates process not found
-            } else if (this.readyQueue.length > 0) {
+            } else if (!this.readyQueue.isEmpty()) {
                 return -2; // Return value -2 indicates processes already running
             } else {
-                this.readyQueue.push(process.pid);
+                this.readyQueue.enqueue(process.pid);
                 this.loadFirstProcessInReadyQueue();
                 return 0;
             }
@@ -63,7 +63,7 @@ module TSOS {
         public cpuDidCycle(): void {
             this.quantum--;
             if (this.quantum === 0) {
-                if (this.readyQueue.length > 1) { // Another program exists; context switch
+                if (this.readyQueue.getSize() > 1) { // Another program exists; context switch
                     _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, null));
                 } else {
                     this.quantum = _SchedulerQuantum; // Reset quantum
@@ -83,8 +83,8 @@ module TSOS {
         }
 
         public updateStatistics(): void {
-            for (var i = 0; i < this.readyQueue.length; i++) {
-                var process = this.getProcessForPid(this.readyQueue[i]);
+            for (var i = 0; i < this.readyQueue.getSize(); i++) {
+                var process = this.getProcessForPid(this.readyQueue.q[i]);
                 if (i === 0) { // First item in ready queue is being executed
                     process.executeCycles++;
                 } else { // All others are waiting
@@ -94,25 +94,25 @@ module TSOS {
         }
 
         public executeNextInReadyQueue(): number {
-            if (this.readyQueue.length > 1) { // Need something to switch to
-                var oldProcessPID = this.readyQueue.shift(); // Remove and stash first element
+            if (this.readyQueue.getSize() > 1) { // Need something to switch to
+                var oldProcessPID = this.readyQueue.dequeue(); // Remove and stash first element
                 var oldProcess = this.getProcessForPid(oldProcessPID);
                 _CPU.storeProcess(oldProcess); // Store state of process
-                this.readyQueue.push(oldProcessPID); // Send process to end of ready queue
+                this.readyQueue.enqueue(oldProcessPID); // Send process to end of ready queue
                 return this.loadFirstProcessInReadyQueue();
             }
         }
 
         public loadFirstProcessInReadyQueue(): number {
             this.quantum = _SchedulerQuantum; // Reset quantum
-            if (this.readyQueue.length > 0) {
-                var process = this.getProcessForPid(this.readyQueue[0]); // Get process for first element in ready queue
+            if (!this.readyQueue.isEmpty()) {
+                var process = this.getProcessForPid(this.readyQueue.peek()); // Get process for first element in ready queue
                 if (process.base == -1 || process.limit == -1) { // Process on disk. Need to roll in
-                    if (_CPU.isExecuting === true && this.readyQueue.length > MEMORY_SEGMENT_COUNT) { // Check if need to roll out
-                        var lastPIDInReadyQueue = this.readyQueue[this.readyQueue.length-1]; // Roll out last process in ready queue
+                    if (_CPU.isExecuting === true && this.readyQueue.getSize() > MEMORY_SEGMENT_COUNT) { // Check if need to roll out
+                        var lastPIDInReadyQueue = this.readyQueue.q[this.readyQueue.getSize()-1]; // Roll out last process in ready queue
                         Mmu.rollOutProcessToDisk(lastPIDInReadyQueue);
                     }
-                    Mmu.rollInProcessFromDisk(this.readyQueue[0]); // Roll in process to be run
+                    Mmu.rollInProcessFromDisk(this.readyQueue.peek()); // Roll in process to be run
                 }
                 _CPU.loadProcess(process); // Load process onto CPU
                 Control.hostUpdateDisplay();
@@ -122,9 +122,9 @@ module TSOS {
 
         public runAll(): number {
             if (this.residentList.length === 0) { return -1; } // Return value -1 indicates nothing to run
-            else if (this.readyQueue.length > 0) { return -2; } // Return value -2 indicates processes already running
+            else if (!this.readyQueue.isEmpty()) { return -2; } // Return value -2 indicates processes already running
             for (var i = 0; i < this.residentList.length; i++) {
-                this.readyQueue.push(this.residentList[i].pid);
+                this.readyQueue.enqueue(this.residentList[i].pid);
             }
             this.loadFirstProcessInReadyQueue();
             return 0;
@@ -140,9 +140,9 @@ module TSOS {
         }
 
         public removeProcess(pid: number): void {
-            for (var i = 0; i < this.readyQueue.length; i++) {
-                if (this.readyQueue[i] === pid) {
-                    this.readyQueue.splice(i, 1);
+            for (var i = 0; i < this.readyQueue.getSize(); i++) {
+                if (this.readyQueue.q[i] === pid) {
+                    this.readyQueue.q.splice(i, 1);
                 }
             }
             for (var i = 0; i < this.residentList.length; i++) {

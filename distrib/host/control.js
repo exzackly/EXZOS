@@ -172,7 +172,6 @@ var TSOS;
             }
             diskData += "</tbody></table>";
             diskElement.innerHTML = diskData;
-            Control.hostUpdateDisplayDisk();
         }
         static hostUpdateDisplayDisk() {
             for (var track = 0; track < DISK_TRACK_COUNT; track++) {
@@ -200,7 +199,7 @@ var TSOS;
             else {
                 for (var i = 0; i < processes.length; i++) {
                     var process = processes[i];
-                    var state = _Scheduler.readyQueue[0] == process.pid ? "Executing" : "Ready";
+                    var state = _Scheduler.readyQueue.peek() == process.pid ? "Executing" : "Ready";
                     var location = process.base !== -1 ? "Memory" : "Disk";
                     processData += `<tr><td>${process.pid}</td><td>${TSOS.Utils.toHex(process.PC)}</td><td>${TSOS.Utils.toHex(process.Acc)}</td>` +
                         `<td>${TSOS.Utils.toHex(process.Xreg)}</td><td>${TSOS.Utils.toHex(process.Yreg)}</td><td>${process.Zflag}</td>` +
