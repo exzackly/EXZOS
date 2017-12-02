@@ -16,12 +16,13 @@
 var TSOS;
 (function (TSOS) {
     class Cpu {
-        constructor(pid = -1, base = -1, limit = -1, PC = 0, Acc = 0, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false) {
+        constructor(pid = -1, base = -1, limit = -1, PC = 0, Acc = 0, IR = -1, Xreg = 0, Yreg = 0, Zflag = 0, isExecuting = false) {
             this.pid = pid;
             this.base = base;
             this.limit = limit;
             this.PC = PC;
             this.Acc = Acc;
+            this.IR = IR;
             this.Xreg = Xreg;
             this.Yreg = Yreg;
             this.Zflag = Zflag;
@@ -51,6 +52,7 @@ var TSOS;
             TSOS.Control.highlightMemoryCell(opCodeOperatorIndex, 1, true);
             // Fetch
             var opCodeByte = TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
+            this.IR = opCodeByte;
             this.PC += 1;
             // Decode
             var opCode = this.opCodeMap[opCodeByte];
@@ -80,6 +82,7 @@ var TSOS;
             // pid, base, and limit will not change
             pcb.PC = this.PC;
             pcb.Acc = this.Acc;
+            pcb.IR = this.IR;
             pcb.Xreg = this.Xreg;
             pcb.Yreg = this.Yreg;
             pcb.Zflag = this.Zflag;
@@ -90,6 +93,7 @@ var TSOS;
             this.limit = pcb.limit;
             this.PC = pcb.PC;
             this.Acc = pcb.Acc;
+            this.IR = pcb.IR;
             this.Xreg = pcb.Xreg;
             this.Yreg = pcb.Yreg;
             this.Zflag = pcb.Zflag;

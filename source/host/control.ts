@@ -144,10 +144,13 @@ module TSOS {
         }
 
         public static hostUpdateDisplayCPU(): void {
+            var IR = _CPU.IR === -1 ? "00" : Utils.toHex(_CPU.IR);
+            var mnemonic = _CPU.IR === -1 ? "00" : _CPU.opCodeMap[_CPU.IR].mnemonic;
             var CPUElement = <HTMLInputElement> document.getElementById("displayCPU");
             var CPUData = "<table style='table-layout:fixed; width: 100%; text-align: center;'>" +
-                "<tbody><tr><th>PC</th><th>ACC</th><th>X</th><th>Y</th><th>Z</th></tr>" +
-                "<tr><td>" + Utils.toHex(_CPU.PC) + "</td><td>" + Utils.toHex(_CPU.Acc) + "</td><td>" + Utils.toHex(_CPU.Xreg) +
+                "<tbody><tr><th>PC</th><th>ACC</th><th>IR</th><th>MNE</th><th>X</th><th>Y</th><th>Z</th></tr>" +
+                "<tr><td>" + Utils.toHex(_CPU.PC) + "</td><td>" + Utils.toHex(_CPU.Acc) + "</td><td>" + IR +
+                "</td><td>" + mnemonic + "</td><td>" + Utils.toHex(_CPU.Xreg) +
                 "</td><td>" + Utils.toHex(_CPU.Yreg) + "</td><td>" + _CPU.Zflag + "</td></tr></tbody>" +
                 "</table>";
             CPUElement.innerHTML = CPUData;
@@ -214,19 +217,21 @@ module TSOS {
         }
 
         public static hostUpdateDisplayProcesses(): void {
-            var processData = "<tbody><tr><th>PID</th><th>PC</th><th>ACC</th><th>X</th><th>Y</th>" +
-                "<th>Z</th><th>Priority</th><th>State</th><th>Location</th></tr>";
+            var processData = "<tbody><tr><th>PID</th><th>PC</th><th>ACC</th><th>IR</th><th>MNE</th><th>X</th><th>Y</th>" +
+                "<th>Z</th><th>Prio</th><th>Swap</th><th>State</th></tr>";
             var processes = _Scheduler.residentList;
             if (processes.length == 0) {
-                processData += "<tr><td colspan='9'>No programs in execution</td></tr>";
+                processData += "<tr><td colspan='11'>No programs in execution</td></tr>";
             } else {
                 for (var i = 0; i < processes.length; i++) {
                     var process = processes[i];
+                    var IR = process.IR === -1 ? "00" : Utils.toHex(process.IR);
+                    var mnemonic = process.IR === -1 ? "00" : _CPU.opCodeMap[process.IR].mnemonic;
+                    var swap = process.base !== -1 ? "N" : "Y";
                     var state = _Scheduler.readyQueue.peek() == process.pid ? "Executing" : "Ready";
-                    var location = process.base !== -1 ? "Memory" : "Disk";
                     processData += `<tr><td>${process.pid}</td><td>${Utils.toHex(process.PC)}</td><td>${Utils.toHex(process.Acc)}</td>` +
-                        `<td>${Utils.toHex(process.Xreg)}</td><td>${Utils.toHex(process.Yreg)}</td><td>${process.Zflag}</td>` +
-                        `<td>${process.priority}</td><td>${state}</td><td>${location}</td></tr>`;
+                        `<td>${IR}</td><td>${mnemonic}</td><td>${Utils.toHex(process.Xreg)}</td><td>${Utils.toHex(process.Yreg)}</td><td>${process.Zflag}</td>` +
+                        `<td>${process.priority}</td><td>${swap}</td><td>${state}</td></tr>`;
                 }
             }
             var processesElement = <HTMLTableElement> document.getElementById("displayProcessesTable");

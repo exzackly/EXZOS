@@ -24,6 +24,7 @@ module TSOS {
                     public limit: number = -1,
                     public PC: number = 0,
                     public Acc: number = 0,
+                    public IR: number = -1,
                     public Xreg: number = 0,
                     public Yreg: number = 0,
                     public Zflag: number = 0,
@@ -41,6 +42,7 @@ module TSOS {
 
             // Fetch
             var opCodeByte = Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
+            this.IR = opCodeByte;
             this.PC += 1;
 
             // Decode
@@ -76,6 +78,7 @@ module TSOS {
             // pid, base, and limit will not change
             pcb.PC = this.PC;
             pcb.Acc = this.Acc;
+            pcb.IR = this.IR;
             pcb.Xreg = this.Xreg;
             pcb.Yreg = this.Yreg;
             pcb.Zflag = this.Zflag;
@@ -87,6 +90,7 @@ module TSOS {
             this.limit = pcb.limit;
             this.PC = pcb.PC;
             this.Acc = pcb.Acc;
+            this.IR = pcb.IR;
             this.Xreg = pcb.Xreg;
             this.Yreg = pcb.Yreg;
             this.Zflag = pcb.Zflag;

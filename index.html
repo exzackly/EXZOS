@@ -121,8 +121,8 @@
             <label>CPU</label>
             <div id="displayCPU">
                 <table style="table-layout:fixed; width: 100%; text-align: center;">
-                    <tbody><tr><th>PC</th><th>ACC</th><th>X</th><th>Y</th><th>Z</th></tr>
-                    <tr><td>00</td><td>00</td><td>00</td><td>00</td><td>0</td></tr></tbody>
+                    <tbody><tr><th>PC</th><th>ACC</th><th>IR</th><th>MNE</th><th>X</th><th>Y</th><th>Z</th></tr>
+                    <tr><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>0</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -177,10 +177,10 @@ AC FF 00 FF A9 EE 8D FF 00 A2 02 AC FF 00 FF A9
 
         <div id="divProcesses" style="opacity: 0.9;">
             <label>Processes</label>
-            <div id="displayProcesses" style="font-size: 10pt; width: 400px;">
+            <div id="displayProcesses" style="font-size: 9pt; width: 400px;">
                 <table id="displayProcessesTable" style="width: 100%; text-align: center;">
-                    <tbody><tr><th>PID</th><th>PC</th><th>ACC</th><th>X</th><th>Y</th><th>Z</th><th>Priority</th><th>State</th><th>Location</th></tr>
-                    <tr><td colspan="9">No programs in execution</td></tr>
+                    <tbody><tr><th>PID</th><th>PC</th><th>ACC</th><th>IR</th><th>MNE</th><th>X</th><th>Y</th><th>Z</th><th>Prio</th><th>Swap</th><th>State</th></tr>
+                    <tr><td colspan="11">No programs in execution</td></tr>
                     </tbody>
                 </table>
             </div>
