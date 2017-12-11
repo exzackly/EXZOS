@@ -63,8 +63,12 @@ module TSOS {
             return this.data.slice(DISK_BLOCK_RESERVED_SIZE); // Ignore directory chunk
         }
 
-        public zero(): void {
-            this.data = [];
+        public zero(type: FormatType): void {
+            if (type === FormatType.Quick) {
+                this.data.splice(0, DISK_BLOCK_RESERVED_SIZE, ...[0,0,0,0]); /// Format directory chunk
+            } else if (type === FormatType.Full) {
+                this.data = [];
+            }
             this.updateDisk();
         }
 
@@ -73,6 +77,11 @@ module TSOS {
     export enum LocationSearchType {
         DirectorySearch,
         FileSearch
+    }
+
+    export enum FormatType {
+        Quick,
+        Full
     }
 
     export enum LSType {
@@ -115,12 +124,12 @@ module TSOS {
         public krnKbdDriverEntry() {
             // Initialization routine for this, the kernel-mode Keyboard Device Driver.
             this.status = "loaded";
-            this.format(true);
+            this.format(FormatType.Full, true);
             Control.hostUpdateDisplayDisk();
         }
 
         public krnDiskHandleRequest(params) {
-            if (params.length === 0) { // Fail safe; should never happen
+            if (params.length < 2) { // Fail safe; should never happen
                 return;
             }
             _Kernel.krnTrace("Disk operation~" + params[0]);
@@ -186,7 +195,7 @@ module TSOS {
                     _OsShell.putPrompt();
                     break;
                 case DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT:
-                    this.format();
+                    this.format(params[1]);
                     _StdOut.putText("Disk successfully formatted.");
                     _StdOut.advanceLine();
                     _OsShell.putPrompt();
@@ -367,7 +376,7 @@ module TSOS {
                 trackLocationEnd = DISK_TRACK_COUNT;
             }
             var action = (location: DiskLocation): DiskLocation => { // Lambda function to determine and return unused location
-                var data = new DiskData(location)
+                var data = new DiskData(location);
                 if (data.isUsed() === false) {
                     data.setUsed();
                     return data.location;
@@ -395,13 +404,13 @@ module TSOS {
             return this.iterateDisk(0, 1, action); // Functional programming is cool
         }
 
-        public format(initialize: boolean = false): void {
+        public format(type: FormatType, initialize: boolean = false): void {
             var action = (location: DiskLocation): DiskLocation => { // Lambda function to zero each data block
                 if (initialize === true) {
                     _Disk.initializeBlock(location);
                 }
                 var data = new DiskData(location);
-                data.zero();
+                data.zero(type);
                 return null;
             };
             this.iterateDisk(0, DISK_TRACK_COUNT, action); // Functional programming is cool

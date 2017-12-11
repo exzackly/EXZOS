@@ -86,8 +86,8 @@ var TSOS;
             var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_DELETE_FILE, filename];
             _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
         }
-        static hostFormatDisk() {
-            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT];
+        static hostFormatDisk(type) {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT, type];
             _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
         }
         static hostListFilesOnDisk(type) {

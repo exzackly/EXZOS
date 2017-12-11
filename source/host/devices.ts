@@ -101,8 +101,8 @@ module TSOS {
             _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
         }
 
-        public static hostFormatDisk(): void {
-            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT];
+        public static hostFormatDisk(type: FormatType): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT, type];
             _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
         }
 

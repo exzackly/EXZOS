@@ -51,8 +51,13 @@ var TSOS;
         writableChunk() {
             return this.data.slice(DISK_BLOCK_RESERVED_SIZE); // Ignore directory chunk
         }
-        zero() {
-            this.data = [];
+        zero(type) {
+            if (type === FormatType.Quick) {
+                this.data.splice(0, DISK_BLOCK_RESERVED_SIZE, ...[0, 0, 0, 0]); /// Format directory chunk
+            }
+            else if (type === FormatType.Full) {
+                this.data = [];
+            }
             this.updateDisk();
         }
     }
@@ -62,6 +67,11 @@ var TSOS;
         LocationSearchType[LocationSearchType["DirectorySearch"] = 0] = "DirectorySearch";
         LocationSearchType[LocationSearchType["FileSearch"] = 1] = "FileSearch";
     })(LocationSearchType = TSOS.LocationSearchType || (TSOS.LocationSearchType = {}));
+    let FormatType;
+    (function (FormatType) {
+        FormatType[FormatType["Quick"] = 0] = "Quick";
+        FormatType[FormatType["Full"] = 1] = "Full";
+    })(FormatType = TSOS.FormatType || (TSOS.FormatType = {}));
     let LSType;
     (function (LSType) {
         LSType[LSType["Normal"] = 0] = "Normal";
@@ -81,11 +91,11 @@ var TSOS;
         krnKbdDriverEntry() {
             // Initialization routine for this, the kernel-mode Keyboard Device Driver.
             this.status = "loaded";
-            this.format(true);
+            this.format(FormatType.Full, true);
             TSOS.Control.hostUpdateDisplayDisk();
         }
         krnDiskHandleRequest(params) {
-            if (params.length === 0) {
+            if (params.length < 2) {
                 return;
             }
             _Kernel.krnTrace("Disk operation~" + params[0]);
@@ -155,7 +165,7 @@ var TSOS;
                     _OsShell.putPrompt();
                     break;
                 case DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT:
-                    this.format();
+                    this.format(params[1]);
                     _StdOut.putText("Disk successfully formatted.");
                     _StdOut.advanceLine();
                     _OsShell.putPrompt();
@@ -352,13 +362,13 @@ var TSOS;
             };
             return this.iterateDisk(0, 1, action); // Functional programming is cool
         }
-        format(initialize = false) {
+        format(type, initialize = false) {
             var action = (location) => {
                 if (initialize === true) {
                     _Disk.initializeBlock(location);
                 }
                 var data = new DiskData(location);
-                data.zero();
+                data.zero(type);
                 return null;
             };
             this.iterateDisk(0, DISK_TRACK_COUNT, action); // Functional programming is cool

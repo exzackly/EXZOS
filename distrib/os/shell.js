@@ -41,8 +41,8 @@ var TSOS;
                 "read": { desc: "<filename> - Displays the contents of file with specified filename.", fn: this.shellRead },
                 "write": { desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename.", fn: this.shellWrite },
                 "delete": { desc: "<filename> - Deletes file with specified filename.", fn: this.shellDelete },
-                "format": { desc: "- Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat },
-                "ls": { desc: "- Lists the files currently stored on the disk.", fn: this.shellLs },
+                "format": { desc: "<-quick | -full?> - Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat },
+                "ls": { desc: "<-l?> - Lists the files currently stored on the disk.", fn: this.shellLs },
                 "setschedule": { desc: "<rr | fcfs | priority> - Sets the CPU scheduling algorithm.", fn: this.shellSetSchedule },
                 "getschedule": { desc: "- Displays the CPU scheduling algorithm in use.", fn: this.shellGetSchedule }
             };
@@ -355,14 +355,25 @@ var TSOS;
                 _StdOut.putText("Cannot format. Please wait until all running processes are completed.");
                 return;
             }
-            TSOS.Devices.hostFormatDisk();
+            if (args.length === 0 || args.length > 0 && args[0] === "-full") {
+                TSOS.Devices.hostFormatDisk(TSOS.FormatType.Full);
+            }
+            else if (args.length > 0 && args[0] === "-quick") {
+                TSOS.Devices.hostFormatDisk(TSOS.FormatType.Quick);
+            }
+            else {
+                _StdOut.putText("Invalid flag: format <-quick | -full?>  Please supply a valid flag.");
+            }
         }
         shellLs(args) {
             if (args.length > 0 && args[0] === "-l") {
                 TSOS.Devices.hostListFilesOnDisk(TSOS.LSType.Long);
             }
-            else {
+            else if (args.length === 0) {
                 TSOS.Devices.hostListFilesOnDisk(TSOS.LSType.Normal);
+            }
+            else {
+                _StdOut.putText("Invalid flag: ls <-l?>  Please supply a valid flag.");
             }
         }
         shellSetSchedule(args) {
