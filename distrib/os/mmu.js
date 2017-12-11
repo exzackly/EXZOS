@@ -15,8 +15,8 @@ var TSOS;
     class Mmu {
         static isValidMemoryAccess(logicalAddress, size, base, limit) {
             if ((logicalAddress < 0x0) ||
-                (Mmu.getPhysicalAddress(logicalAddress, base) >= limit) ||
-                (Mmu.getPhysicalAddress(logicalAddress, base) + size > limit)) {
+                (logicalAddress >= limit) ||
+                (logicalAddress + size > limit)) {
                 // Memory access violation found; throw shit fit
                 _KernelInterruptQueue.enqueue(new TSOS.Interrupt(MEMORY_ACCESS_VIOLATION_IRQ, _CPU.pid));
                 return false;
@@ -45,7 +45,7 @@ var TSOS;
             return _Memory.getBytes(Mmu.getPhysicalAddress(logicalAddress, base), size);
         }
         static zeroBytesWithBaseAndLimit(base, limit) {
-            _Memory.zeroBytes(base, limit - base);
+            _Memory.zeroBytes(base, limit);
         }
         static zeroMemory() {
             for (var i = 0; i < Mmu.segmentStatus.length; i++) {
@@ -62,7 +62,7 @@ var TSOS;
             //todo: implement run out of memory on disk
             //return -2; // Return value of -2 denotes insufficient memory
             this.pidIncrementor += 1; // Increment for next process
-            var limit = base !== -1 ? base + MEMORY_SEGMENT_SIZE : -1;
+            var limit = base !== -1 ? MEMORY_SEGMENT_SIZE : -1;
             _Scheduler.residentList.push(new TSOS.Pcb(pid, base, limit, priority));
             _Scheduler.sortResidentList();
             // Store program...
@@ -88,7 +88,7 @@ var TSOS;
         static rollInProcessFromDisk(pid) {
             var process = _Scheduler.getProcessForPid(pid);
             var base = Mmu.determineBase(pid);
-            var limit = base !== -1 ? base + MEMORY_SEGMENT_SIZE : -1;
+            var limit = base !== -1 ? MEMORY_SEGMENT_SIZE : -1;
             process.base = base;
             process.limit = limit;
             TSOS.Devices.hostLoadProgramFromDisk(pid);

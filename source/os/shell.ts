@@ -36,7 +36,7 @@ module TSOS {
             "procrastinate": {desc: "- Execute standard workflow. Persistence is key...", fn: this.shellProcrastinate},
             "status": {desc: "<string> - Sets the status in the taskbar.", fn: this.shellStatus},
             "erupt": {desc: "- Pompeii.", fn: this.shellErupt},
-            "load": {desc: "<priority?> - Loads program from User Program Input. Optionally specify priority", fn: this.shellLoad},
+            "load": {desc: "<priority?> - Loads program from User Program Input. Optionally specify priority.", fn: this.shellLoad},
             "run": {desc: "<pid> - Runs program with specified PID.", fn: this.shellRun},
             "ps": {desc: "- Displays a list of the running processes and their IDs.", fn: this.shellPs},
             "kill": {desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill},
@@ -45,7 +45,7 @@ module TSOS {
             "quantum": {desc: "<int> - Sets the round robin quantum.", fn: this.shellQuantum},
             "create": {desc: "<filename> - Creates file with specified filename.", fn: this.shellCreate},
             "read": {desc: "<filename> - Displays the contents of file with specified filename.", fn: this.shellRead},
-            "write": {desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename", fn: this.shellWrite},
+            "write": {desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename.", fn: this.shellWrite},
             "delete": {desc: "<filename> - Deletes file with specified filename.", fn: this.shellDelete},
             "format": {desc: "- Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat},
             "ls": {desc: "- Lists the files currently stored on the disk.", fn: this.shellLs},
@@ -135,11 +135,11 @@ module TSOS {
 
         public shellVer(args): void {
             if (!this.wasCommandRepeated()) {
-                _StdOut.putText("Just assume it's still in alpha");
+                _StdOut.putText("Just assume it's still in alpha.");
             } else {
                 _StdOut.putText("If you must know...");
                 _StdOut.advanceLine();
-                _StdOut.putText(APP_NAME + " version " + APP_VERSION);
+                _StdOut.putText(`${APP_NAME} version ${APP_VERSION}.`);
             }
         }
 
@@ -148,7 +148,7 @@ module TSOS {
             var commands = Object.keys(this.commandMap);
             for (var i = 0; i < commands.length; i++) {
                 _StdOut.advanceLine();
-                _StdOut.putText("  " + commands[i] + " " + this.commandMap[commands[i]].desc);
+                _StdOut.putText(`  ${commands[i]} ${this.commandMap[commands[i]].desc}`);
             }
         }
 
@@ -183,15 +183,15 @@ module TSOS {
             if (args.length > 0) {
                 if (args[0] === "on") {
                     _Trace = true;
-                    _StdOut.putText("Trace ON");
+                    _StdOut.putText("Trace ON.");
                 } else if (args[0] === "off") {
                     _Trace = false;
-                    _StdOut.putText("Trace OFF");
+                    _StdOut.putText("Trace OFF.");
                 } else {
                     _StdOut.putText("Invalid argument.  Usage: trace <on | off>.");
                 }
             } else {
-                _StdOut.putText("Usage: trace <on | off>");
+                _StdOut.putText("Usage: trace <on | off>.");
             }
         }
 
@@ -218,14 +218,14 @@ module TSOS {
         }
 
         public shellWhereAmI(args): void {
-            _StdOut.putText("Not far enough");
+            _StdOut.putText("Not far enough.");
         }
 
         public shellProcrastinate(args): void {
             if (!this.wasCommandRepeated()) {
-                _StdOut.putText("Later");
+                _StdOut.putText("Later.");
             } else {
-                _StdOut.putText("*sigh* I'll do it tomorrow");
+                _StdOut.putText("*sigh* I'll do it tomorrow.");
             }
         }
 
@@ -238,7 +238,7 @@ module TSOS {
         }
 
         public shellErupt(args): void {
-            _StdOut.putText("User initiated EXZOS shutdown");
+            _StdOut.putText("User initiated EXZOS shutdown.");
             _Kernel.krnTrapError("User initiated OS error");
         }
 
@@ -253,11 +253,11 @@ module TSOS {
             }
             var pid = Control.hostLoad(priority); // Have Control verify and load program
             if (pid === -1) {  // pid value of -1 denotes invalid program
-                _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z");
+                _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z.");
             } else if (pid === -2) {  // pid value of -2 denotes insufficient memory
-                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process");
+                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
             } else {
-                _StdOut.putText("Program loaded. PID " + pid);
+                _StdOut.putText(`Program loaded. PID ${pid}`);
             }
         }
 
@@ -310,7 +310,7 @@ module TSOS {
         public shellRunAll(args): void {
             var running = _Scheduler.runAll();
             if (running === -1) { // Return value -1 indicates nothing to run
-                _StdOut.putText("Runall failed; nothing to run");
+                _StdOut.putText("Runall failed; nothing to run.");
             } else if (running === -2) { // Return value -2 indicates processes already running
                 _StdOut.putText("Cannot runall. Please wait until all running processes are completed.");
             }

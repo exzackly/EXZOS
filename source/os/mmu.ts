@@ -21,8 +21,8 @@ module TSOS {
 
         public static isValidMemoryAccess(logicalAddress: number, size: number, base: number, limit: number): boolean {
             if ((logicalAddress < 0x0) || // Before first addressable address
-                (Mmu.getPhysicalAddress(logicalAddress, base) >= limit) || // Past last addressable address
-                (Mmu.getPhysicalAddress(logicalAddress, base)+size > limit)) { // Past last addressable address
+                (logicalAddress >= limit) || // Past last addressable address
+                (logicalAddress+size > limit)) { // Past last addressable address
                 // Memory access violation found; throw shit fit
                 _KernelInterruptQueue.enqueue(new Interrupt(MEMORY_ACCESS_VIOLATION_IRQ, _CPU.pid));
                 return false;
@@ -53,7 +53,7 @@ module TSOS {
         }
 
         public static zeroBytesWithBaseAndLimit(base: number, limit: number): void {
-            _Memory.zeroBytes(base, limit-base);
+            _Memory.zeroBytes(base, limit);
         }
 
         public static zeroMemory(): void {
@@ -72,7 +72,7 @@ module TSOS {
             //todo: implement run out of memory on disk
             //return -2; // Return value of -2 denotes insufficient memory
             this.pidIncrementor += 1; // Increment for next process
-            var limit = base !== -1 ? base+MEMORY_SEGMENT_SIZE : -1;
+            var limit = base !== -1 ? MEMORY_SEGMENT_SIZE : -1;
             _Scheduler.residentList.push(new Pcb(pid, base, limit, priority));
             _Scheduler.sortResidentList();
 
@@ -102,7 +102,7 @@ module TSOS {
         public static rollInProcessFromDisk(pid: number): void {
             var process = _Scheduler.getProcessForPid(pid);
             var base = Mmu.determineBase(pid);
-            var limit = base !== -1 ? base+MEMORY_SEGMENT_SIZE : -1;
+            var limit = base !== -1 ? MEMORY_SEGMENT_SIZE : -1;
             process.base = base;
             process.limit = limit;
             Devices.hostLoadProgramFromDisk(pid);

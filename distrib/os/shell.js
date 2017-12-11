@@ -30,7 +30,7 @@ var TSOS;
                 "procrastinate": { desc: "- Execute standard workflow. Persistence is key...", fn: this.shellProcrastinate },
                 "status": { desc: "<string> - Sets the status in the taskbar.", fn: this.shellStatus },
                 "erupt": { desc: "- Pompeii.", fn: this.shellErupt },
-                "load": { desc: "<priority?> - Loads program from User Program Input. Optionally specify priority", fn: this.shellLoad },
+                "load": { desc: "<priority?> - Loads program from User Program Input. Optionally specify priority.", fn: this.shellLoad },
                 "run": { desc: "<pid> - Runs program with specified PID.", fn: this.shellRun },
                 "ps": { desc: "- Displays a list of the running processes and their IDs.", fn: this.shellPs },
                 "kill": { desc: "<pid> - Kills the process with specified PID.", fn: this.shellKill },
@@ -39,7 +39,7 @@ var TSOS;
                 "quantum": { desc: "<int> - Sets the round robin quantum.", fn: this.shellQuantum },
                 "create": { desc: "<filename> - Creates file with specified filename.", fn: this.shellCreate },
                 "read": { desc: "<filename> - Displays the contents of file with specified filename.", fn: this.shellRead },
-                "write": { desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename", fn: this.shellWrite },
+                "write": { desc: "<filename> \"<data>\" - Writes the data inside the quotes to file with specified filename.", fn: this.shellWrite },
                 "delete": { desc: "<filename> - Deletes file with specified filename.", fn: this.shellDelete },
                 "format": { desc: "- Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat },
                 "ls": { desc: "- Lists the files currently stored on the disk.", fn: this.shellLs },
@@ -121,12 +121,12 @@ var TSOS;
         }
         shellVer(args) {
             if (!this.wasCommandRepeated()) {
-                _StdOut.putText("Just assume it's still in alpha");
+                _StdOut.putText("Just assume it's still in alpha.");
             }
             else {
                 _StdOut.putText("If you must know...");
                 _StdOut.advanceLine();
-                _StdOut.putText(APP_NAME + " version " + APP_VERSION);
+                _StdOut.putText(`${APP_NAME} version ${APP_VERSION}.`);
             }
         }
         shellHelp(args) {
@@ -134,7 +134,7 @@ var TSOS;
             var commands = Object.keys(this.commandMap);
             for (var i = 0; i < commands.length; i++) {
                 _StdOut.advanceLine();
-                _StdOut.putText("  " + commands[i] + " " + this.commandMap[commands[i]].desc);
+                _StdOut.putText(`  ${commands[i]} ${this.commandMap[commands[i]].desc}`);
             }
         }
         shellShutdown(args) {
@@ -166,18 +166,18 @@ var TSOS;
             if (args.length > 0) {
                 if (args[0] === "on") {
                     _Trace = true;
-                    _StdOut.putText("Trace ON");
+                    _StdOut.putText("Trace ON.");
                 }
                 else if (args[0] === "off") {
                     _Trace = false;
-                    _StdOut.putText("Trace OFF");
+                    _StdOut.putText("Trace OFF.");
                 }
                 else {
                     _StdOut.putText("Invalid argument.  Usage: trace <on | off>.");
                 }
             }
             else {
-                _StdOut.putText("Usage: trace <on | off>");
+                _StdOut.putText("Usage: trace <on | off>.");
             }
         }
         shellRot13(args) {
@@ -202,14 +202,14 @@ var TSOS;
             _StdOut.putText(currentDateString);
         }
         shellWhereAmI(args) {
-            _StdOut.putText("Not far enough");
+            _StdOut.putText("Not far enough.");
         }
         shellProcrastinate(args) {
             if (!this.wasCommandRepeated()) {
-                _StdOut.putText("Later");
+                _StdOut.putText("Later.");
             }
             else {
-                _StdOut.putText("*sigh* I'll do it tomorrow");
+                _StdOut.putText("*sigh* I'll do it tomorrow.");
             }
         }
         shellStatus(args) {
@@ -221,7 +221,7 @@ var TSOS;
             }
         }
         shellErupt(args) {
-            _StdOut.putText("User initiated EXZOS shutdown");
+            _StdOut.putText("User initiated EXZOS shutdown.");
             _Kernel.krnTrapError("User initiated OS error");
         }
         shellLoad(args) {
@@ -235,13 +235,13 @@ var TSOS;
             }
             var pid = TSOS.Control.hostLoad(priority); // Have Control verify and load program
             if (pid === -1) {
-                _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z");
+                _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z.");
             }
             else if (pid === -2) {
-                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process");
+                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
             }
             else {
-                _StdOut.putText("Program loaded. PID " + pid);
+                _StdOut.putText(`Program loaded. PID ${pid}`);
             }
         }
         shellRun(args) {
@@ -293,7 +293,7 @@ var TSOS;
         shellRunAll(args) {
             var running = _Scheduler.runAll();
             if (running === -1) {
-                _StdOut.putText("Runall failed; nothing to run");
+                _StdOut.putText("Runall failed; nothing to run.");
             }
             else if (running === -2) {
                 _StdOut.putText("Cannot runall. Please wait until all running processes are completed.");
