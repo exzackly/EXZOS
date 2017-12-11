@@ -111,6 +111,11 @@ module TSOS {
             _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
         }
 
+        public static hostCheckDisk(): void {
+            var params = [DeviceDriverDisk.DEVICE_DRIVER_DISK_CHECK_DISK];
+            _KernelInterruptQueue.enqueue(new Interrupt(DISK_IRQ, params));
+        }
+
     }
 
 }

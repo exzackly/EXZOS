@@ -13,6 +13,7 @@ module TSOS {
     export class DiskLocation {
 
         public static MBR_LOCATION: DiskLocation = new DiskLocation(0, 0, 0);
+        public static BLANK_LOCATION: DiskLocation = new DiskLocation(0, 0, 0);
 
         constructor(public track: number,
                     public sector: number,
@@ -35,18 +36,18 @@ module TSOS {
             var data = bytes.map(x => Utils.toHex(x));
             var padding = new Array(DISK_BLOCK_SIZE - data.length).fill("00"); // Pad bytes with 0 to size of DISK_BLOCK_SIZE
             var replacementData = data.concat(padding);
-            localStorage.setItem(location.key(), replacementData.join(""));
+            sessionStorage.setItem(location.key(), replacementData.join(""));
         }
 
         public getBlock(location: DiskLocation): number[] {
-            var hexData = localStorage.getItem(location.key());
+            var hexData = sessionStorage.getItem(location.key());
             var hexDataArray = hexData.match(/.{2}/g); // Break block into array of length 2 hex codes
             var data = hexDataArray.map(x => Utils.fromHex(x)); // Convert program from hex to decimal
             return data;
         }
 
         public initializeBlock(location: DiskLocation): void {
-            localStorage.setItem(location.key(), "00");
+            sessionStorage.setItem(location.key(), "00");
         }
 
     }

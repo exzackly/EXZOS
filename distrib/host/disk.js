@@ -19,6 +19,7 @@ var TSOS;
         }
     }
     DiskLocation.MBR_LOCATION = new DiskLocation(0, 0, 0);
+    DiskLocation.BLANK_LOCATION = new DiskLocation(0, 0, 0);
     TSOS.DiskLocation = DiskLocation;
     class Disk {
         constructor() {
@@ -28,16 +29,16 @@ var TSOS;
             var data = bytes.map(x => TSOS.Utils.toHex(x));
             var padding = new Array(DISK_BLOCK_SIZE - data.length).fill("00"); // Pad bytes with 0 to size of DISK_BLOCK_SIZE
             var replacementData = data.concat(padding);
-            localStorage.setItem(location.key(), replacementData.join(""));
+            sessionStorage.setItem(location.key(), replacementData.join(""));
         }
         getBlock(location) {
-            var hexData = localStorage.getItem(location.key());
+            var hexData = sessionStorage.getItem(location.key());
             var hexDataArray = hexData.match(/.{2}/g); // Break block into array of length 2 hex codes
             var data = hexDataArray.map(x => TSOS.Utils.fromHex(x)); // Convert program from hex to decimal
             return data;
         }
         initializeBlock(location) {
-            localStorage.setItem(location.key(), "00");
+            sessionStorage.setItem(location.key(), "00");
         }
     }
     TSOS.Disk = Disk;

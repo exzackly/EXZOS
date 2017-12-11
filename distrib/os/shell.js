@@ -44,7 +44,8 @@ var TSOS;
                 "format": { desc: "<-quick | -full?> - Initializes all blocks in all sectors in all tracks.", fn: this.shellFormat },
                 "ls": { desc: "<-l?> - Lists the files currently stored on the disk.", fn: this.shellLs },
                 "setschedule": { desc: "<rr | fcfs | priority> - Sets the CPU scheduling algorithm.", fn: this.shellSetSchedule },
-                "getschedule": { desc: "- Displays the CPU scheduling algorithm in use.", fn: this.shellGetSchedule }
+                "getschedule": { desc: "- Displays the CPU scheduling algorithm in use.", fn: this.shellGetSchedule },
+                "chkdsk": { desc: "- Recovers deleted files and reclaims unused blocks.", fn: this.shellChkdsk }
             };
             this.putPrompt();
         }
@@ -400,6 +401,9 @@ var TSOS;
         }
         shellGetSchedule(args) {
             _StdOut.putText(_Scheduler.schedulingType);
+        }
+        shellChkdsk(args) {
+            TSOS.Devices.hostCheckDisk();
         }
     }
     TSOS.Shell = Shell;

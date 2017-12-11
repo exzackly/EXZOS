@@ -76,6 +76,7 @@ var TSOS;
     (function (LSType) {
         LSType[LSType["Normal"] = 0] = "Normal";
         LSType[LSType["Long"] = 1] = "Long";
+        LSType[LSType["Data"] = 2] = "Data";
     })(LSType = TSOS.LSType || (TSOS.LSType = {}));
     // Extends DeviceDriver
     class DeviceDriverDisk extends TSOS.DeviceDriver {
@@ -95,7 +96,7 @@ var TSOS;
             TSOS.Control.hostUpdateDisplayDisk();
         }
         krnDiskHandleRequest(params) {
-            if (params.length < 2) {
+            if (params.length === 0) {
                 return;
             }
             _Kernel.krnTrace("Disk operation~" + params[0]);
@@ -171,7 +172,7 @@ var TSOS;
                     _OsShell.putPrompt();
                     break;
                 case DeviceDriverDisk.DEVICE_DRIVER_DISK_LS:
-                    var files = this.getFiles(params[1]);
+                    var files = this.getDirectoryFiles(params[1]);
                     if (files.length === 0) {
                         _StdOut.putText("No files on disk.");
                     }
@@ -181,6 +182,12 @@ var TSOS;
                             _StdOut.putText(files[i]);
                         }
                     }
+                    _StdOut.advanceLine();
+                    _OsShell.putPrompt();
+                    break;
+                case DeviceDriverDisk.DEVICE_DRIVER_DISK_CHECK_DISK:
+                    this.checkDisk();
+                    _StdOut.putText("Check disk successful.");
                     _StdOut.advanceLine();
                     _OsShell.putPrompt();
                     break;
@@ -257,6 +264,7 @@ var TSOS;
             }
             var data = new DiskData(location);
             data.setUsed();
+            data.setNextLocation(TSOS.DiskLocation.BLANK_LOCATION);
             var createDate = new Date(Date.now()).toLocaleString();
             var newDirectoryData = this.createFileDirectoryData(filename, 0, createDate);
             data.setWritableData(newDirectoryData);
@@ -302,7 +310,7 @@ var TSOS;
             data.setWritableData(newDirectoryData);
             // Write data blocks
             for (var i = 0; i < locations.length; i++) {
-                var nextLocation = i + 1 < locations.length ? locations[i + 1] : new TSOS.DiskLocation(0, 0, 0); // Last location has "next" of 0:0:0
+                var nextLocation = i + 1 < locations.length ? locations[i + 1] : TSOS.DiskLocation.BLANK_LOCATION;
                 var data = new DiskData(locations[i]);
                 data.setUsed();
                 data.setNextLocation(nextLocation);
@@ -377,14 +385,14 @@ var TSOS;
             MBRData.setUsed();
             MBRData.setWritableData([0, 0, 1, 1, 0, 0]);
         }
-        getFiles(type) {
+        getDirectoryFiles(type) {
             var files = [];
             var action = (location) => {
                 var data = new DiskData(location);
                 if (data.location.sector === 0 && data.location.block === 0) {
                     return null;
                 }
-                if (data.isUsed() === false) {
+                if (type !== LSType.Data && data.isUsed() === false) {
                     return null; // Block is unused; skip
                 }
                 var directoryData = this.parseFileDirectoryData(data.writableChunk());
@@ -397,10 +405,58 @@ var TSOS;
                 else if (type === LSType.Long) {
                     files.push(directoryData.join(" "));
                 }
+                else if (type === LSType.Data) {
+                    if (directoryData[0] !== "") {
+                        files.push(data);
+                    }
+                }
                 return null;
             };
             this.iterateDisk(0, 1, action); // Functional programming is cool
             return files;
+        }
+        getDataBlocks() {
+            var files = new Set(); // Use set to keep track of "visited" locations
+            var action = (location) => {
+                var data = new DiskData(location);
+                if (data.isUsed() === true) {
+                    files.add(location.key()); // Key is used to uniquely identify location
+                }
+                return null;
+            };
+            this.iterateDisk(1, DISK_TRACK_COUNT, action); // Functional programming is cool
+            return files;
+        }
+        checkDisk() {
+            var directoryBlocks = this.getDirectoryFiles(LSType.Data);
+            var dataBlocks = this.getDataBlocks();
+            // Restore free blocks that contain data
+            for (var i = 0; i < directoryBlocks.length; i++) {
+                if (directoryBlocks[i].isUsed() === false) {
+                    _StdOut.putText(`Restoring ${directoryBlocks[i].location.key()}`);
+                    _StdOut.advanceLine();
+                    directoryBlocks[i].setUsed();
+                }
+                var filename = this.parseFileDirectoryData(directoryBlocks[i].writableChunk());
+                var action = (param) => {
+                    if (param.isUsed() === false) {
+                        _StdOut.putText(`Restoring ${param.location.key()}`);
+                        _StdOut.advanceLine();
+                        param.setUsed();
+                    }
+                    dataBlocks.delete(param.location.key()); // Remove from set to "mark" location "visited"
+                };
+                this.iterateDiskChain(filename[0], action); // Functional programming is cool
+            }
+            // Reclaim unused data blocks
+            dataBlocks.forEach(unusedDiskLocationKey => {
+                _StdOut.putText(`Reclaiming ${unusedDiskLocationKey}`);
+                _StdOut.advanceLine();
+                var keyParts = unusedDiskLocationKey.split(":").map(x => parseInt(x)); // Reconstruct disk location
+                var location = new TSOS.DiskLocation(keyParts[0], keyParts[1], keyParts[2]);
+                var data = new DiskData(location);
+                data.setFree();
+            });
         }
         parseFileDirectoryData(data) {
             var directoryData = TSOS.Utils.fromHexArray(data).split(DeviceDriverDisk.DEVICE_DRIVER_DISK_SIZE_AND_DATE_INFIX);
@@ -427,6 +483,7 @@ var TSOS;
     DeviceDriverDisk.DEVICE_DRIVER_DISK_DELETE_FILE = 7;
     DeviceDriverDisk.DEVICE_DRIVER_DISK_FORMAT = 8;
     DeviceDriverDisk.DEVICE_DRIVER_DISK_LS = 9;
+    DeviceDriverDisk.DEVICE_DRIVER_DISK_CHECK_DISK = 10;
     DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX = "~";
     DeviceDriverDisk.DEVICE_DRIVER_DISK_HIDDEN_FILE_PREFIX = ".";
     DeviceDriverDisk.DEVICE_DRIVER_DISK_SIZE_AND_DATE_INFIX = String.fromCharCode(31); // ASCII unit separator

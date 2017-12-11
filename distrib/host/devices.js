@@ -94,6 +94,10 @@ var TSOS;
             var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_LS, type];
             _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
         }
+        static hostCheckDisk() {
+            var params = [TSOS.DeviceDriverDisk.DEVICE_DRIVER_DISK_CHECK_DISK];
+            _KernelInterruptQueue.enqueue(new TSOS.Interrupt(DISK_IRQ, params));
+        }
     }
     TSOS.Devices = Devices;
 })(TSOS || (TSOS = {}));

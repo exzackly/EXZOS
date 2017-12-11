@@ -86,7 +86,8 @@ module TSOS {
 
     export enum LSType {
         Normal,
-        Long
+        Long,
+        Data
     }
 
     // Extends DeviceDriver
@@ -103,6 +104,7 @@ module TSOS {
 
         public static DEVICE_DRIVER_DISK_FORMAT: number = 8;
         public static DEVICE_DRIVER_DISK_LS: number = 9;
+        public static DEVICE_DRIVER_DISK_CHECK_DISK: number = 10;
 
         private static DEVICE_DRIVER_DISK_PROGRAM_PREFIX: string = "~";
         private static DEVICE_DRIVER_DISK_HIDDEN_FILE_PREFIX: string = ".";
@@ -129,7 +131,7 @@ module TSOS {
         }
 
         public krnDiskHandleRequest(params) {
-            if (params.length < 2) { // Fail safe; should never happen
+            if (params.length === 0) { // Fail safe; should never happen
                 return;
             }
             _Kernel.krnTrace("Disk operation~" + params[0]);
@@ -201,7 +203,7 @@ module TSOS {
                     _OsShell.putPrompt();
                     break;
                 case DeviceDriverDisk.DEVICE_DRIVER_DISK_LS:
-                    var files = this.getFiles(params[1]);
+                    var files = this.getDirectoryFiles(params[1]);
                     if (files.length === 0) {
                         _StdOut.putText("No files on disk.");
                     } else {
@@ -210,6 +212,12 @@ module TSOS {
                             _StdOut.putText(files[i]);
                         }
                     }
+                    _StdOut.advanceLine();
+                    _OsShell.putPrompt();
+                    break;
+                case DeviceDriverDisk.DEVICE_DRIVER_DISK_CHECK_DISK:
+                    this.checkDisk();
+                    _StdOut.putText("Check disk successful.");
                     _StdOut.advanceLine();
                     _OsShell.putPrompt();
                     break;
@@ -292,6 +300,7 @@ module TSOS {
             }
             var data = new DiskData(location);
             data.setUsed();
+            data.setNextLocation(DiskLocation.BLANK_LOCATION);
             var createDate = new Date(Date.now()).toLocaleString();
             var newDirectoryData = this.createFileDirectoryData(filename, 0, createDate);
             data.setWritableData(newDirectoryData);
@@ -341,7 +350,7 @@ module TSOS {
             data.setWritableData(newDirectoryData);
             // Write data blocks
             for (var i = 0; i < locations.length; i++) {
-                var nextLocation = i + 1 < locations.length ? locations[i + 1] : new DiskLocation(0, 0, 0); // Last location has "next" of 0:0:0
+                var nextLocation = i + 1 < locations.length ? locations[i + 1] : DiskLocation.BLANK_LOCATION;
                 var data = new DiskData(locations[i]);
                 data.setUsed();
                 data.setNextLocation(nextLocation);
@@ -420,14 +429,14 @@ module TSOS {
             MBRData.setWritableData([0, 0, 1, 1, 0, 0]);
         }
 
-        public getFiles(type: LSType): string[] {
-            var files: string[] = [];
+        public getDirectoryFiles(type: LSType): any[] {
+            var files: any[] = [];
             var action = (location: DiskLocation): DiskLocation => { // Lambda function to aggregate files
                 var data = new DiskData(location);
                 if (data.location.sector === 0 && data.location.block === 0) { // Skip MBR; cannot change starting point to 0, as needed (e.g. 0:1:0)
                     return null;
                 }
-                if (data.isUsed() === false) {
+                if (type !== LSType.Data && data.isUsed() === false) {
                     return null; // Block is unused; skip
                 }
                 var directoryData = this.parseFileDirectoryData(data.writableChunk());
@@ -438,11 +447,63 @@ module TSOS {
                     }
                 } else if (type === LSType.Long) {
                     files.push(directoryData.join(" "));
+                } else if (type === LSType.Data) {
+                    if (directoryData[0] !== "") { // Return all blocks that have data
+                        files.push(data);
+                    }
                 }
                 return null;
             };
             this.iterateDisk(0, 1, action); // Functional programming is cool
             return files;
+        }
+
+        public getDataBlocks(): Set<string> {
+            var files: Set<string> = new Set(); // Use set to keep track of "visited" locations
+            var action = (location: DiskLocation): DiskLocation => { // Lambda function to aggregate all used data blocks
+                var data = new DiskData(location);
+                if (data.isUsed() === true) {
+                    files.add(location.key()); // Key is used to uniquely identify location
+                }
+                return null;
+            };
+            this.iterateDisk(1, DISK_TRACK_COUNT, action); // Functional programming is cool
+            return files;
+        }
+
+        public checkDisk(): void {
+            var directoryBlocks = this.getDirectoryFiles(LSType.Data);
+            var dataBlocks = this.getDataBlocks();
+
+            // Restore free blocks that contain data
+            for (var i = 0; i < directoryBlocks.length; i++) {
+                if (directoryBlocks[i].isUsed() === false) { // Restore free directory block that contains data
+                    _StdOut.putText(`Restoring ${directoryBlocks[i].location.key()}`);
+                    _StdOut.advanceLine();
+                    directoryBlocks[i].setUsed();
+                }
+                var filename = this.parseFileDirectoryData(directoryBlocks[i].writableChunk());
+                var action = (param): void => { // Lambda function to restore free data blocks and "mark" location "visited"
+                    if (param.isUsed() === false) {
+                        _StdOut.putText(`Restoring ${param.location.key()}`);
+                        _StdOut.advanceLine();
+                        param.setUsed();
+                    }
+                    dataBlocks.delete(param.location.key()); // Remove from set to "mark" location "visited"
+                };
+                this.iterateDiskChain(filename[0], action); // Functional programming is cool
+            }
+
+            // Reclaim unused data blocks
+            dataBlocks.forEach(unusedDiskLocationKey => {
+                _StdOut.putText(`Reclaiming ${unusedDiskLocationKey}`);
+                _StdOut.advanceLine();
+                var keyParts = unusedDiskLocationKey.split(":").map(x => parseInt(x)); // Reconstruct disk location
+                var location = new DiskLocation(keyParts[0], keyParts[1], keyParts[2]);
+                var data = new DiskData(location);
+                data.setFree();
+                }
+            );
         }
 
         public parseFileDirectoryData(data: number[]): string[] {
