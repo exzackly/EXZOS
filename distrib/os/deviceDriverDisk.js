@@ -44,6 +44,30 @@ var TSOS;
             }
             return new TSOS.DiskLocation(this.data[1], this.data[2], this.data[3]);
         }
+        setMBRNextDirectoryLocation(location) {
+            this.data[4] = location.track; // Fourth byte indicates next free track
+            this.data[5] = location.sector; // Fifth byte indicates next free sector
+            this.data[6] = location.block; // Sixth byte indicates next free block
+            this.updateDisk();
+        }
+        MBRNextDirectoryLocation() {
+            if (this.data[4] === 0 && this.data[5] === 0 && this.data[6] === 0) {
+                return null;
+            }
+            return new TSOS.DiskLocation(this.data[4], this.data[5], this.data[6]);
+        }
+        setMBRNextFileLocation(location) {
+            this.data[7] = location.track; // Seventh byte indicates next free track
+            this.data[8] = location.sector; // Eighth byte indicates next free sector
+            this.data[9] = location.block; // Ninth byte indicates next free block
+            this.updateDisk();
+        }
+        MBRNextFileLocation() {
+            if (this.data[7] === 0 && this.data[8] === 0 && this.data[9] === 0) {
+                return null;
+            }
+            return new TSOS.DiskLocation(this.data[7], this.data[8], this.data[9]);
+        }
         setWritableData(data) {
             this.data = this.data.slice(0, DISK_BLOCK_RESERVED_SIZE).concat(data); // Preserve directory chunk
             this.updateDisk();
@@ -229,6 +253,8 @@ var TSOS;
             var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
             var directoryLocation = this.createOnDisk(filename);
             if (directoryLocation === null) {
+                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
+                _StdOut.advanceLine();
                 return false;
             }
             return this.writeToDisk(directoryLocation, program);
@@ -258,7 +284,7 @@ var TSOS;
             if (this.locationForFilename(filename) !== null) {
                 return null; // File with specified filename already exists
             }
-            var location = this.determineFreeLocation(LocationSearchType.DirectorySearch);
+            var location = this.fetchFromMBR(LocationSearchType.DirectorySearch);
             if (location === null) {
                 return null; // Free directory location could not be found
             }
@@ -292,7 +318,11 @@ var TSOS;
             var action = (param) => {
                 param.setFree(); // Set data to unused state
             };
-            return this.iterateDiskChain(filename, action) === true ? true : false; // Functional programming is cool
+            var res = this.iterateDiskChain(filename, action) === true ? true : false; // Functional programming is cool
+            // Update MBR directory and file
+            this.updateMBR(LocationSearchType.DirectorySearch);
+            this.updateMBR(LocationSearchType.FileSearch);
+            return res;
         }
         writeToDisk(directoryLocation, file) {
             if (file.length === 0) {
@@ -312,7 +342,6 @@ var TSOS;
             for (var i = 0; i < locations.length; i++) {
                 var nextLocation = i + 1 < locations.length ? locations[i + 1] : TSOS.DiskLocation.BLANK_LOCATION;
                 var data = new DiskData(locations[i]);
-                data.setUsed();
                 data.setNextLocation(nextLocation);
                 var writableChunk = file.splice(0, DISK_BLOCK_WRITABLE_SIZE);
                 data.setWritableData(writableChunk);
@@ -323,35 +352,69 @@ var TSOS;
             var locations = [];
             var locationsNeeded = Math.ceil(size / DISK_BLOCK_WRITABLE_SIZE); // Ceiling needed to store last portion
             for (var i = 0; i < locationsNeeded; i++) {
-                var location = this.determineFreeLocation(LocationSearchType.FileSearch);
+                var location = this.fetchFromMBR(LocationSearchType.FileSearch);
                 if (location === null) {
+                    _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
+                    _StdOut.advanceLine();
+                    for (var j = 0; j < locations.length; j++) {
+                        var data = new DiskData(locations[j]);
+                        data.setFree();
+                    }
                     return null;
                 }
                 locations.push(location);
             }
             return locations;
         }
-        determineFreeLocation(searchType) {
-            //todo: Update and use MBR
+        fetchFromMBR(type) {
+            var MBRData = new DiskData(TSOS.DiskLocation.MBR_LOCATION);
+            var location;
+            if (type === LocationSearchType.DirectorySearch) {
+                location = MBRData.MBRNextDirectoryLocation();
+            }
+            else if (type === LocationSearchType.FileSearch) {
+                location = MBRData.MBRNextFileLocation();
+            }
+            if (location !== null) {
+                var data = new DiskData(location);
+                data.setUsed();
+                this.updateMBR(type);
+                return location;
+            }
+            else {
+                return null;
+            }
+        }
+        updateMBR(type) {
             var trackLocationStart; // Different search types require different start and end points
             var trackLocationEnd;
-            if (searchType == LocationSearchType.DirectorySearch) {
+            if (type == LocationSearchType.DirectorySearch) {
                 trackLocationStart = 0;
                 trackLocationEnd = 1;
             }
-            else if (searchType == LocationSearchType.FileSearch) {
+            else if (type == LocationSearchType.FileSearch) {
                 trackLocationStart = 1;
                 trackLocationEnd = DISK_TRACK_COUNT;
             }
             var action = (location) => {
                 var data = new DiskData(location);
                 if (data.isUsed() === false) {
-                    data.setUsed();
                     return data.location;
                 }
                 return null;
             };
-            return this.iterateDisk(trackLocationStart, trackLocationEnd, action); // Functional programming is cool
+            var nextLocation = this.iterateDisk(trackLocationStart, trackLocationEnd, action); // Functional programming is cool
+            if (nextLocation === null) {
+                nextLocation = TSOS.DiskLocation.BLANK_LOCATION;
+            }
+            var MBRData = new DiskData(TSOS.DiskLocation.MBR_LOCATION);
+            if (type === LocationSearchType.DirectorySearch) {
+                MBRData.setMBRNextDirectoryLocation(nextLocation);
+            }
+            else if (type === LocationSearchType.FileSearch) {
+                MBRData.setMBRNextFileLocation(nextLocation);
+            }
+            TSOS.Control.hostUpdateDisplayDisk();
         }
         locationForFilename(filename) {
             var action = (location) => {
@@ -457,6 +520,7 @@ var TSOS;
                 var data = new DiskData(location);
                 data.setFree();
             });
+            this.updateMBR(LocationSearchType.FileSearch);
         }
         parseFileDirectoryData(data) {
             var directoryData = TSOS.Utils.fromHexArray(data).split(DeviceDriverDisk.DEVICE_DRIVER_DISK_SIZE_AND_DATE_INFIX);

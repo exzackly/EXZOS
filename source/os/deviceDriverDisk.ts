@@ -54,6 +54,34 @@ module TSOS {
             return new DiskLocation(this.data[1], this.data[2], this.data[3]);
         }
 
+        public setMBRNextDirectoryLocation(location: DiskLocation): void {
+            this.data[4] = location.track; // Fourth byte indicates next free track
+            this.data[5] = location.sector; // Fifth byte indicates next free sector
+            this.data[6] = location.block; // Sixth byte indicates next free block
+            this.updateDisk();
+        }
+
+        public MBRNextDirectoryLocation(): DiskLocation {
+            if (this.data[4] === 0 && this.data[5] === 0 && this.data[6] === 0) { // No next location
+                return null;
+            }
+            return new DiskLocation(this.data[4], this.data[5], this.data[6]);
+        }
+
+        public setMBRNextFileLocation(location: DiskLocation): void {
+            this.data[7] = location.track; // Seventh byte indicates next free track
+            this.data[8] = location.sector; // Eighth byte indicates next free sector
+            this.data[9] = location.block; // Ninth byte indicates next free block
+            this.updateDisk();
+        }
+
+        public MBRNextFileLocation(): DiskLocation {
+            if (this.data[7] === 0 && this.data[8] === 0 && this.data[9] === 0) { // No next location
+                return null;
+            }
+            return new DiskLocation(this.data[7], this.data[8], this.data[9]);
+        }
+
         public setWritableData(data: number[]) {
             this.data = this.data.slice(0, DISK_BLOCK_RESERVED_SIZE).concat(data); // Preserve directory chunk
             this.updateDisk();
@@ -65,7 +93,7 @@ module TSOS {
 
         public zero(type: FormatType): void {
             if (type === FormatType.Quick) {
-                this.data.splice(0, DISK_BLOCK_RESERVED_SIZE, ...[0,0,0,0]); /// Format directory chunk
+                this.data.splice(0, DISK_BLOCK_RESERVED_SIZE, ...[0, 0, 0, 0]); /// Format directory chunk
             } else if (type === FormatType.Full) {
                 this.data = [];
             }
@@ -137,7 +165,7 @@ module TSOS {
             _Kernel.krnTrace("Disk operation~" + params[0]);
             switch (params[0]) {
                 case DeviceDriverDisk.DEVICE_DRIVER_DISK_WRITE_PROGRAM:
-                    if (this.writeProgramToDisk(params[1], params[2]) !== true) { // Fail safe; should never happen
+                    if (this.writeProgramToDisk(params[1], params[2]) !== true) { // Occurs when out of disk space
                         _StdOut.putText(`Error: PID ${params[1]} could not be written to disk. Terminating...`);
                         _Scheduler.terminateProcess(params[1]); // Terminate process to prevent chaos
                         _StdOut.advanceLine();
@@ -262,6 +290,8 @@ module TSOS {
             var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
             var directoryLocation = this.createOnDisk(filename);
             if (directoryLocation === null) {
+                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
+                _StdOut.advanceLine();
                 return false;
             }
             return this.writeToDisk(directoryLocation, program);
@@ -294,7 +324,7 @@ module TSOS {
             if (this.locationForFilename(filename) !== null) {
                 return null; // File with specified filename already exists
             }
-            var location = this.determineFreeLocation(LocationSearchType.DirectorySearch);
+            var location = this.fetchFromMBR(LocationSearchType.DirectorySearch);
             if (location === null) {
                 return null; // Free directory location could not be found
             }
@@ -331,7 +361,11 @@ module TSOS {
             var action = (param): void => { // Lambda function to mark all blocks as free
                 param.setFree(); // Set data to unused state
             };
-            return this.iterateDiskChain(filename, action) === true ? true : false; // Functional programming is cool
+            var res = this.iterateDiskChain(filename, action) === true ? true : false; // Functional programming is cool
+            // Update MBR directory and file
+            this.updateMBR(LocationSearchType.DirectorySearch);
+            this.updateMBR(LocationSearchType.FileSearch);
+            return res;
         }
 
         public writeToDisk(directoryLocation: DiskLocation, file: number[]): boolean {
@@ -352,10 +386,9 @@ module TSOS {
             for (var i = 0; i < locations.length; i++) {
                 var nextLocation = i + 1 < locations.length ? locations[i + 1] : DiskLocation.BLANK_LOCATION;
                 var data = new DiskData(locations[i]);
-                data.setUsed();
                 data.setNextLocation(nextLocation);
                 var writableChunk = file.splice(0, DISK_BLOCK_WRITABLE_SIZE);
-                data.setWritableData(writableChunk)
+                data.setWritableData(writableChunk);
             }
             return true;
         }
@@ -364,8 +397,14 @@ module TSOS {
             var locations: DiskLocation[] = [];
             var locationsNeeded = Math.ceil(size / DISK_BLOCK_WRITABLE_SIZE); // Ceiling needed to store last portion
             for (var i = 0; i < locationsNeeded; i++) {
-                var location = this.determineFreeLocation(LocationSearchType.FileSearch);
-                if (location === null) {
+                var location = this.fetchFromMBR(LocationSearchType.FileSearch);
+                if (location === null) { // Not enough free space; free partial allocated portions
+                    _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
+                    _StdOut.advanceLine();
+                    for (var j = 0; j < locations.length; j++) {
+                        var data = new DiskData(locations[j]);
+                        data.setFree();
+                    }
                     return null;
                 }
                 locations.push(location);
@@ -373,26 +412,52 @@ module TSOS {
             return locations;
         }
 
-        public determineFreeLocation(searchType: LocationSearchType): DiskLocation {
-            //todo: Update and use MBR
+        public fetchFromMBR(type: LocationSearchType): DiskLocation {
+            var MBRData = new DiskData(DiskLocation.MBR_LOCATION);
+            var location;
+            if (type === LocationSearchType.DirectorySearch) {
+                location = MBRData.MBRNextDirectoryLocation();
+            } else if (type === LocationSearchType.FileSearch) {
+                location = MBRData.MBRNextFileLocation();
+            }
+            if (location !== null) {
+                var data = new DiskData(location);
+                data.setUsed();
+                this.updateMBR(type);
+                return location;
+            } else {
+                return null;
+            }
+        }
+
+        public updateMBR(type: LocationSearchType): void {
             var trackLocationStart; // Different search types require different start and end points
             var trackLocationEnd;
-            if (searchType == LocationSearchType.DirectorySearch) {
+            if (type == LocationSearchType.DirectorySearch) {
                 trackLocationStart = 0;
                 trackLocationEnd = 1;
-            } else if (searchType == LocationSearchType.FileSearch) {
+            } else if (type == LocationSearchType.FileSearch) {
                 trackLocationStart = 1;
                 trackLocationEnd = DISK_TRACK_COUNT;
             }
             var action = (location: DiskLocation): DiskLocation => { // Lambda function to determine and return unused location
                 var data = new DiskData(location);
                 if (data.isUsed() === false) {
-                    data.setUsed();
                     return data.location;
                 }
                 return null;
             };
-            return this.iterateDisk(trackLocationStart, trackLocationEnd, action); // Functional programming is cool
+            var nextLocation = this.iterateDisk(trackLocationStart, trackLocationEnd, action); // Functional programming is cool
+            if (nextLocation === null) {
+                nextLocation = DiskLocation.BLANK_LOCATION;
+            }
+            var MBRData = new DiskData(DiskLocation.MBR_LOCATION);
+            if (type === LocationSearchType.DirectorySearch) {
+                MBRData.setMBRNextDirectoryLocation(nextLocation);
+            } else if (type === LocationSearchType.FileSearch) {
+                MBRData.setMBRNextFileLocation(nextLocation);
+            }
+            Control.hostUpdateDisplayDisk();
         }
 
         public locationForFilename(filename: string): DiskLocation {
@@ -496,14 +561,15 @@ module TSOS {
 
             // Reclaim unused data blocks
             dataBlocks.forEach(unusedDiskLocationKey => {
-                _StdOut.putText(`Reclaiming ${unusedDiskLocationKey}`);
-                _StdOut.advanceLine();
-                var keyParts = unusedDiskLocationKey.split(":").map(x => parseInt(x)); // Reconstruct disk location
-                var location = new DiskLocation(keyParts[0], keyParts[1], keyParts[2]);
-                var data = new DiskData(location);
-                data.setFree();
+                    _StdOut.putText(`Reclaiming ${unusedDiskLocationKey}`);
+                    _StdOut.advanceLine();
+                    var keyParts = unusedDiskLocationKey.split(":").map(x => parseInt(x)); // Reconstruct disk location
+                    var location = new DiskLocation(keyParts[0], keyParts[1], keyParts[2]);
+                    var data = new DiskData(location);
+                    data.setFree();
                 }
             );
+            this.updateMBR(LocationSearchType.FileSearch);
         }
 
         public parseFileDirectoryData(data: number[]): string[] {

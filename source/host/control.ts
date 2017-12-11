@@ -312,7 +312,6 @@ module TSOS {
             _Kernel.krnShutdown();
             // Stop the interval that's simulating our clock pulse.
             clearInterval(_hardwareClockID);
-            // TODO: Is there anything else we need to do here?
         }
 
         public static hostBtnReset_click(btn): void {

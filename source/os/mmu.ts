@@ -69,8 +69,6 @@ module TSOS {
             // Create PCB for new process
             var pid = this.pidIncrementor;
             var base = Mmu.determineBase(pid);
-            //todo: implement run out of memory on disk
-            //return -2; // Return value of -2 denotes insufficient memory
             this.pidIncrementor += 1; // Increment for next process
             var limit = base !== -1 ? MEMORY_SEGMENT_SIZE : -1;
             _Scheduler.residentList.push(new Pcb(pid, base, limit, priority));

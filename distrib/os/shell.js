@@ -10,7 +10,6 @@
     Note: While fun and learning are the primary goals of all enrichment center activities,
           serious injuries may occur when trying to write your own Operating System.
    ------------ */
-// TODO: Write a base class / prototype for system services and let Shell inherit from it.
 var TSOS;
 (function (TSOS) {
     class Shell {
@@ -142,7 +141,6 @@ var TSOS;
             _StdOut.putText("Shutting down...");
             // Call Kernel shutdown routine.
             _Kernel.krnShutdown();
-            // TODO: Stop the final prompt from being displayed.  If possible.  Not a high priority.  (Damn OCD!)
         }
         shellCls(args) {
             _StdOut.clearScreen();
@@ -237,9 +235,6 @@ var TSOS;
             var pid = TSOS.Control.hostLoad(priority); // Have Control verify and load program
             if (pid === -1) {
                 _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z.");
-            }
-            else if (pid === -2) {
-                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
             }
             else {
                 _StdOut.putText(`Program loaded. PID ${pid}`);

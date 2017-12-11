@@ -13,8 +13,6 @@
           serious injuries may occur when trying to write your own Operating System.
    ------------ */
 
-// TODO: Write a base class / prototype for system services and let Shell inherit from it.
-
 module TSOS {
     export class Shell {
 
@@ -157,7 +155,6 @@ module TSOS {
             _StdOut.putText("Shutting down...");
             // Call Kernel shutdown routine.
             _Kernel.krnShutdown();
-            // TODO: Stop the final prompt from being displayed.  If possible.  Not a high priority.  (Damn OCD!)
         }
 
         public shellCls(args): void {
@@ -255,8 +252,6 @@ module TSOS {
             var pid = Control.hostLoad(priority); // Have Control verify and load program
             if (pid === -1) {  // pid value of -1 denotes invalid program
                 _StdOut.putText("Invalid program. Valid characters are 0-9, a-z, and A-Z.");
-            } else if (pid === -2) {  // pid value of -2 denotes insufficient memory
-                _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
             } else {
                 _StdOut.putText(`Program loaded. PID ${pid}`);
             }
