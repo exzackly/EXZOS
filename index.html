@@ -1,9 +1,9 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <meta name="author"             content="Zachary Recolan" />
-    <link rel="stylesheet" href="exzos.css" type="text/css" media="screen" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <meta name="author" content="Zachary Recolan"/>
+    <link rel="stylesheet" href="exzos.css" type="text/css" media="screen"/>
     <title>
         EXZOS - a browser-based virtual Operating System in TypeScript
     </title>
@@ -42,15 +42,17 @@
 
 <body onload="onDocumentLoad()">
 
-<img id="volcano" src="distrib/images/volcano.png" style="position:absolute; margin-left:550px; z-index:-1; height:550px; width:300px;">
-<img id="errorMessage" src="distrib/images/error-message.png" style="position:absolute; margin-left:200px; margin-top:450px; z-index:999; display: none;">
+<img id="volcano" src="distrib/images/volcano.png"
+     style="position:absolute; margin-left:550px; z-index:-1; height:550px; width:300px;">
+<img id="errorMessage" src="distrib/images/error-message.png"
+     style="position:absolute; margin-left:200px; margin-top:450px; z-index:999; display: none;">
 
 <div id="divMain" class="container">
 
     <div class="container-left">
         <div id="divButtonBar" style="margin:4px;">
             <input type="button"
-                   id = "btnStartOS"
+                   id="btnStartOS"
                    name="brnStartOS"
                    class="normal_button"
                    value="Start"
@@ -58,7 +60,7 @@
                    onclick="TSOS.Control.hostBtnStartOS_click(this);">
 
             <input type="button"
-                   id = "btnHaltOS"
+                   id="btnHaltOS"
                    name="brnHaltOS"
                    class="normal_button"
                    disabled="disabled"
@@ -67,7 +69,7 @@
                    onclick="TSOS.Control.hostBtnHaltOS_click(this);">
 
             <input type="button"
-                   id = "btnReset"
+                   id="btnReset"
                    name="brnReset"
                    class="normal_button"
                    disabled="disabled"
@@ -76,7 +78,7 @@
                    onclick="TSOS.Control.hostBtnReset_click(this);">
 
             <input type="button"
-                   id = "btnToggleSingleStepMode"
+                   id="btnToggleSingleStepMode"
                    name="btnToggleSingleStepMode"
                    class="normal_button"
                    disabled="disabled"
@@ -86,7 +88,7 @@
                    onclick="TSOS.Control.hostBtnToggle_Single_Step_Mode(this);">
 
             <input type="button"
-                   id = "btnSingleStepCPU"
+                   id="btnSingleStepCPU"
                    name="btnSingleStepCPU"
                    class="normal_button"
                    disabled="disabled"
@@ -96,13 +98,22 @@
                    onclick="TSOS.Control.hostBtnSingleStepCPU(this);">
         </div>
 
-        <div id="divConsole" style="margin:4px; width:500px; height:500px;">
-            <canvas id="display"
-                    width="500px"
-                    height="500px"
-                    tabindex="3">
-            </canvas>
+        <div id="divConsoleContainer" style="margin-top: 10px; width: 521px; height: 510px; overflow-y: scroll;">
+            <div id="divConsole" style="margin:4px; width:500px; height: 500px;">
+                <canvas id="display"
+                        width="500px"
+                        height="500px"
+                        tabindex="3">
+                </canvas>
+            </div>
         </div>
+
+        <br>
+
+        <div>
+            <img id="logo" src="distrib/images/logo.png" style="position: absolute; left: 100px;">
+        </div>
+
     </div>
 
     <div class="container-middle">
@@ -121,44 +132,64 @@
             <label>CPU</label>
             <div id="displayCPU">
                 <table style="table-layout:fixed; width: 100%; text-align: center;">
-                    <tbody><tr><th>PC</th><th>ACC</th><th>IR</th><th>MNE</th><th>X</th><th>Y</th><th>Z</th></tr>
-                    <tr><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>0</td></tr></tbody>
+                    <tbody>
+                    <tr>
+                        <th>PC</th>
+                        <th>ACC</th>
+                        <th>IR</th>
+                        <th>MNE</th>
+                        <th>X</th>
+                        <th>Y</th>
+                        <th>Z</th>
+                    </tr>
+                    <tr>
+                        <td>00</td>
+                        <td>00</td>
+                        <td>00</td>
+                        <td>00</td>
+                        <td>00</td>
+                        <td>00</td>
+                        <td>0</td>
+                    </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
 
         <div id="divMemory" style="opacity: 0.9;">
             <label>Memory</label>
-            <div id="displayMemory" style="height: 150px; overflow-y: scroll;"> </div>
+            <div id="displayMemory" style="height: 150px; overflow-y: scroll;"></div>
         </div>
 
         <div id="divUserProgramInput" style="opacity: 0.9;">
             <label>User Program Input</label>
             <textarea name="taProgramInput"
-                      id  ="taProgramInput"
+                      id="taProgramInput"
+                      style="border-radius: 7px;"
                       rows="8"
                       cols="48"
             >
 A9 03 8D 41 00 A9 01 8D 40 00 AC 40 00 A2 01 FF EE 40 00 AE 40 00 EC 41 00 D0 EF A9 44 8D 42 00 A9 4F 8D 43 00 A9 4E 8D 44 00 A9 45 8D 45 00 A9 00 8D 46 00 A2 02 A0 42 FF 00
          </textarea>
-<!--
-A9 00 8D EC 00 A9 00 8D EC 00 A9 00 8D ED 00 A9
-00 8D ED 00 A9 00 8D EE 00 A9 00 8D EF 00 AD ED
-00 8D FF 00 AE FF 00 A9 00 8D FF 00 EC FF 00 D0
-BA AD EC 00 8D FF 00 A9 01 6D FF 00 8D EC 00 AD
-EC 00 8D FF 00 AE FF 00 A9 03 8D FF 00 EC FF 00
-D0 05 A9 01 8D ED 00 A9 00 8D EE 00 A9 00 8D EF
-00 AD EF 00 8D FF 00 AE FF 00 A9 00 8D FF 00 EC
-FF 00 D0 49 AD EE 00 8D FF 00 A9 01 6D FF 00 8D
-EE 00 AD EE 00 8D FF 00 AE FF 00 A9 02 8D FF 00
-EC FF 00 D0 05 A9 01 8D EF 00 A9 F8 8D FF 00 A2
-02 AC FF 00 FF AD EE 00 A2 01 8D FF 00 AC FF 00
-FF A9 00 8D FF 00 A2 01 EC FF 00 D0 A4 A9 F1 8D
-FF 00 A2 02 AC FF 00 FF AD EC 00 A2 01 8D FF 00
-AC FF 00 FF A9 EE 8D FF 00 A2 02 AC FF 00 FF A9
-00 8D FF 00 A2 01 EC FF 00 D0 33 00 00 00 20 20
-00 20 6F 75 74 65 72 00 20 69 6E 6E 65 72 00 00
--->
+            <!--
+            Lots of loops:
+            A9 00 8D EC 00 A9 00 8D EC 00 A9 00 8D ED 00 A9
+            00 8D ED 00 A9 00 8D EE 00 A9 00 8D EF 00 AD ED
+            00 8D FF 00 AE FF 00 A9 00 8D FF 00 EC FF 00 D0
+            BA AD EC 00 8D FF 00 A9 01 6D FF 00 8D EC 00 AD
+            EC 00 8D FF 00 AE FF 00 A9 03 8D FF 00 EC FF 00
+            D0 05 A9 01 8D ED 00 A9 00 8D EE 00 A9 00 8D EF
+            00 AD EF 00 8D FF 00 AE FF 00 A9 00 8D FF 00 EC
+            FF 00 D0 49 AD EE 00 8D FF 00 A9 01 6D FF 00 8D
+            EE 00 AD EE 00 8D FF 00 AE FF 00 A9 02 8D FF 00
+            EC FF 00 D0 05 A9 01 8D EF 00 A9 F8 8D FF 00 A2
+            02 AC FF 00 FF AD EE 00 A2 01 8D FF 00 AC FF 00
+            FF A9 00 8D FF 00 A2 01 EC FF 00 D0 A4 A9 F1 8D
+            FF 00 A2 02 AC FF 00 FF AD EC 00 A2 01 8D FF 00
+            AC FF 00 FF A9 EE 8D FF 00 A2 02 AC FF 00 FF A9
+            00 8D FF 00 A2 01 EC FF 00 D0 33 00 00 00 20 20
+            00 20 6F 75 74 65 72 00 20 69 6E 6E 65 72 00 00
+            -->
         </div>
 
     </div>
@@ -172,15 +203,30 @@ AC FF 00 FF A9 EE 8D FF 00 A2 02 AC FF 00 FF A9
 
         <div id="divDisk" style="opacity: 0.9;">
             <label>Disk</label>
-            <div id="displayDisk" style="height: 200px; width: 400px; overflow-y: scroll;"> </div>
+            <div id="displayDisk" style="height: 200px; width: 400px; overflow-y: scroll;"></div>
         </div>
 
         <div id="divProcesses" style="opacity: 0.9;">
             <label>Processes</label>
             <div id="displayProcesses" style="font-size: 9pt; width: 400px;">
                 <table id="displayProcessesTable" style="width: 100%; text-align: center;">
-                    <tbody><tr><th>PID</th><th>PC</th><th>ACC</th><th>IR</th><th>MNE</th><th>X</th><th>Y</th><th>Z</th><th>Prio</th><th>Swap</th><th>State</th></tr>
-                    <tr><td colspan="11">No programs in execution</td></tr>
+                    <tbody>
+                    <tr>
+                        <th>PID</th>
+                        <th>PC</th>
+                        <th>ACC</th>
+                        <th>IR</th>
+                        <th>MNE</th>
+                        <th>X</th>
+                        <th>Y</th>
+                        <th>Z</th>
+                        <th>Prio</th>
+                        <th>Swap</th>
+                        <th>State</th>
+                    </tr>
+                    <tr>
+                        <td colspan="11">No programs in execution</td>
+                    </tr>
                     </tbody>
                 </table>
             </div>

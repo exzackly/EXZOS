@@ -46,10 +46,10 @@ var TSOS;
         }
         cycle() {
             _Kernel.krnTrace('CPU cycle');
-            TSOS.Control.removeHighlightFromMemoryCells();
+            TSOS.Control.hostRemoveHighlightFromMemoryCells();
             // Highlight op code operator
             var opCodeOperatorIndex = TSOS.Mmu.getPhysicalAddress(this.PC, this.base);
-            TSOS.Control.highlightMemoryCell(opCodeOperatorIndex, 1, true);
+            TSOS.Control.hostHighlightMemoryCell(opCodeOperatorIndex, 1, true);
             // Fetch
             var opCodeByte = TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
             this.IR = opCodeByte;
@@ -63,7 +63,7 @@ var TSOS;
             // Highlight op code operand
             for (var i = 0; i < opCode.operandSize; i++) {
                 var opCodeOperandIndex = TSOS.Mmu.getPhysicalAddress(this.PC + i, this.base);
-                TSOS.Control.highlightMemoryCell(opCodeOperandIndex, 2);
+                TSOS.Control.hostHighlightMemoryCell(opCodeOperandIndex, 2);
             }
             // Update wait cycles and turnaround cycles
             _Scheduler.updateStatistics();
@@ -133,7 +133,6 @@ var TSOS;
             A9 FC 6D 07 00 00 00 07
             Acc should be 03
              */
-            //todo: test carry portion
             this.Acc += this.getBytesAtNextAddress(this.PC);
         }
         loadXRegWithConstant() {
@@ -233,7 +232,7 @@ var TSOS;
         getBytesAtNextAddress(location) {
             var address = this.getNextAddress(location);
             var memoryIndex = TSOS.Mmu.getPhysicalAddress(address, this.base);
-            TSOS.Control.highlightMemoryCell(memoryIndex, 3);
+            TSOS.Control.hostHighlightMemoryCell(memoryIndex, 3);
             return TSOS.Mmu.getByteAtLogicalAddress(address, this.base, this.limit);
         }
     }

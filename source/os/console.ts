@@ -25,6 +25,7 @@ module TSOS {
         }
 
         private clearScreen(): void {
+            _Canvas.height = _CanvasDefaultHeight; // Reset canvas height
             _DrawingContext.clearRect(0, 0, _Canvas.width, _Canvas.height);
         }
 
@@ -47,7 +48,7 @@ module TSOS {
                 } else if (chr === String.fromCharCode(13)) { //     Enter key
                     // The enter key marks the end of a console command, so ...
                     // ... check if buffer has input ...
-                    if (this.buffer.length == 0) { // buffer is empty; advance line and do not process command
+                    if (this.buffer.length === 0) { // buffer is empty; advance line and do not process command
                         this.advanceLine();
                         _OsShell.putPrompt();
                         return;
@@ -153,14 +154,6 @@ module TSOS {
         }
 
         public putText(text): void {
-            // My first inclination here was to write two functions: putChar() and putString().
-            // Then I remembered that JavaScript is (sadly) untyped and it won't differentiate
-            // between the two.  So rather than be like PHP and write two (or more) functions that
-            // do the same thing, thereby encouraging confusion and decreasing readability, I
-            // decided to write one function and use the term "text" to connote string or char.
-            //
-            // UPDATE: Even though we are now working in TypeScript, char and string remain undistinguished.
-            //         Consider fixing that.
             if (text !== "") {
                 var lineWrappedText = this.lineWrappedText(text);
                 for (var i = 0; i < lineWrappedText.length; i++) {
@@ -180,11 +173,20 @@ module TSOS {
             this.currentYPosition += this.consoleLineHeight();
             // Scroll if cursor at bottom of screen
             if (this.currentYPosition >= _Canvas.height) {
+                /*
+                Alan approved method. Switching to an improved scrolling method,
+                but left to demonstrate the correct way to scroll
+
                 var scrollYBy = (this.currentYPosition-_Canvas.height)+_FontHeightMargin;
                 var screenshot = _DrawingContext.getImageData(0, 0, _Canvas.width, _Canvas.height);
                 this.clearScreen();
                 this.currentYPosition -= scrollYBy;
                 _DrawingContext.putImageData(screenshot, 0, -scrollYBy);
+                */
+                var screenshot = _DrawingContext.getImageData(0, 0, _Canvas.width, _Canvas.height);
+                _Canvas.height += (this.currentYPosition-_Canvas.height)+_FontHeightMargin;
+                _DrawingContext.putImageData(screenshot, 0, 0);
+                Control.hostScrollToBottomOfConsole();
             }
         }
 

@@ -214,7 +214,7 @@ var TSOS;
             var processesElement = document.getElementById("displayProcessesTable");
             processesElement.innerHTML = processData;
         }
-        static highlightMemoryCell(cell, type, scroll = false) {
+        static hostHighlightMemoryCell(cell, type, scroll = false) {
             var cellElement = document.getElementById("memoryCell" + cell);
             if (cellElement === null) {
                 return;
@@ -225,7 +225,7 @@ var TSOS;
                 cellElement.scrollIntoView(scroll);
             }
         }
-        static removeHighlightFromMemoryCells() {
+        static hostRemoveHighlightFromMemoryCells() {
             for (let key in HIGHLIGHT_MAP) {
                 if (HIGHLIGHT_MAP.hasOwnProperty(key)) {
                     var className = HIGHLIGHT_MAP[key];
@@ -235,6 +235,10 @@ var TSOS;
                     }
                 }
             }
+        }
+        static hostScrollToBottomOfConsole() {
+            var consoleContainer = document.getElementById("divConsoleContainer");
+            consoleContainer.scrollTop = consoleContainer.scrollHeight;
         }
         //
         // Host Events

@@ -288,7 +288,7 @@ var TSOS;
         }
         shellClearMem(args) {
             TSOS.Mmu.zeroMemory();
-            TSOS.Control.removeHighlightFromMemoryCells();
+            TSOS.Control.hostRemoveHighlightFromMemoryCells();
             _StdOut.putText("All memory partitions cleared.");
         }
         shellRunAll(args) {

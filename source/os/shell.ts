@@ -304,7 +304,7 @@ module TSOS {
 
         public shellClearMem(args): void {
             Mmu.zeroMemory();
-            Control.removeHighlightFromMemoryCells();
+            Control.hostRemoveHighlightFromMemoryCells();
             _StdOut.putText("All memory partitions cleared.");
         }
 

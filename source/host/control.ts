@@ -238,7 +238,7 @@ module TSOS {
             processesElement.innerHTML = processData;
         }
 
-        public static highlightMemoryCell(cell: number, type: number, scroll: boolean = false): void {
+        public static hostHighlightMemoryCell(cell: number, type: number, scroll: boolean = false): void {
             var cellElement = <HTMLTableCellElement> document.getElementById("memoryCell" + cell);
             if (cellElement === null) {
                 return;
@@ -250,7 +250,7 @@ module TSOS {
             }
         }
 
-        public static removeHighlightFromMemoryCells(): void {
+        public static hostRemoveHighlightFromMemoryCells(): void {
             for (let key in HIGHLIGHT_MAP) {
                 if (HIGHLIGHT_MAP.hasOwnProperty(key)) {
                     var className = HIGHLIGHT_MAP[key];
@@ -260,6 +260,11 @@ module TSOS {
                     }
                 }
             }
+        }
+
+        public static hostScrollToBottomOfConsole(): void {
+            var consoleContainer = document.getElementById("divConsoleContainer");
+            consoleContainer.scrollTop = consoleContainer.scrollHeight;
         }
 
         //

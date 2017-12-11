@@ -31,13 +31,14 @@ h3 {
 }
 
 #display {
-    background-color:#DFDBC3;
-    border: 2px solid red;
+    background-color:#D6CAA9;
     cursor: default;
+    border-radius: 7px;
 }
 
 .normal_button {
     width: 100px;
+    border-radius: 7px;
 }
 
 .footerText {
@@ -56,6 +57,7 @@ h3 {
     box-shadow: 1px 1px 1px 0 lightgray inset;
     font: -moz-field;
     width: 372px;
+    border-radius: 7px;
 }
 
 .operatorHighlight {
@@ -84,7 +86,7 @@ h3 {
 .container-left {
     order:1;
     flex-basis:100%;
-    min-width: 525px;
+    min-width: 550px;
 }
 
 .container-middle {

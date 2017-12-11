@@ -34,11 +34,11 @@ module TSOS {
         public cycle(): void {
             _Kernel.krnTrace('CPU cycle');
 
-            Control.removeHighlightFromMemoryCells();
+            Control.hostRemoveHighlightFromMemoryCells();
 
             // Highlight op code operator
             var opCodeOperatorIndex = Mmu.getPhysicalAddress(this.PC, this.base);
-            Control.highlightMemoryCell(opCodeOperatorIndex, 1, true);
+            Control.hostHighlightMemoryCell(opCodeOperatorIndex, 1, true);
 
             // Fetch
             var opCodeByte = Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit);
@@ -55,7 +55,7 @@ module TSOS {
             // Highlight op code operand
             for (var i = 0; i < opCode.operandSize; i++) { // Operands are variable length; grab all
                 var opCodeOperandIndex = Mmu.getPhysicalAddress(this.PC+i, this.base);
-                Control.highlightMemoryCell(opCodeOperandIndex, 2);
+                Control.hostHighlightMemoryCell(opCodeOperandIndex, 2);
             }
 
             // Update wait cycles and turnaround cycles
@@ -153,7 +153,6 @@ module TSOS {
             A9 FC 6D 07 00 00 00 07
             Acc should be 03
              */
-            //todo: test carry portion
             this.Acc += this.getBytesAtNextAddress(this.PC);
         }
 
@@ -262,7 +261,7 @@ module TSOS {
         public getBytesAtNextAddress(location: number): number {
             var address = this.getNextAddress(location);
             var memoryIndex = Mmu.getPhysicalAddress(address, this.base);
-            Control.highlightMemoryCell(memoryIndex, 3);
+            Control.hostHighlightMemoryCell(memoryIndex, 3);
             return Mmu.getByteAtLogicalAddress(address, this.base, this.limit);
         }
 
