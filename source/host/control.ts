@@ -26,6 +26,7 @@
 module TSOS {
 
     export class Control {
+
         public static hostLogHistory: { clock: number, source: string, msg: string, now: string }[] = [];
 
         public static hostInit(): void {
@@ -338,4 +339,5 @@ module TSOS {
         }
 
     }
+
 }

@@ -75,18 +75,22 @@ module TSOS {
         public putCommandHistory(chr): void {
             if (chr === "&uarr;" && this.commandHistoryIndex > 0) { // check that command history has previous command
                 this.commandHistoryIndex -= 1;
-            } else if (chr == "&darr;" && this.commandHistoryIndex < this.commandHistory.length-1) { // check that do not pass last command entered
+            } else if (chr == "&darr;" && this.commandHistoryIndex < this.commandHistory.length - 1) { // check that do not pass last command entered
                 this.commandHistoryIndex += 1;
-            } else { return; } // past bounds; return before erasing screen
+            } else {
+                return; // past bounds; return before erasing screen
+            }
             this.clearBuffer();
             this.buffer = this.commandHistory[this.commandHistoryIndex];
             this.putText(this.buffer);
         }
 
         public tabCompleteCommand(prefix): void {
-            if (prefix.length === 0) { return; } // Do not autocomplete if buffer empty
+            if (prefix.length === 0) {
+                return; // Do not autocomplete if buffer empty
+            }
             var commands = Object.keys(_OsShell.commandMap);
-            var commandsWithPrefix  = commands.filter(cmd => cmd.startsWith(prefix));
+            var commandsWithPrefix = commands.filter(cmd => cmd.startsWith(prefix));
             if (commandsWithPrefix.length == 1) { // Only 1 possible command with prefix; autocomplete
                 var cmd = commandsWithPrefix[0];
                 this.clearBuffer();
@@ -117,7 +121,7 @@ module TSOS {
             if (this.currentXPosition <= 0) {
                 this.currentYPosition -= this.consoleLineHeight();
                 // xPosition is used to compute where to place the cursor on the previous line
-                var xPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr+this.buffer);
+                var xPosition = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + this.buffer);
                 xPosition = xPosition % _Canvas.width; // If there are multiple lines worth of text in the buffer, calculate the width of the last line
                 this.currentXPosition = xPosition;
             }
@@ -126,17 +130,17 @@ module TSOS {
         public clearBuffer(): void {
             this.currentXPosition = 0;
             // Determine if buffer has line wrapped; clear all lines and adjust currentYPosition if needed
-            var bufferSize = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr+this.buffer);
-            var lineCount = Math.ceil(bufferSize/_Canvas.width);
+            var bufferSize = _DrawingContext.measureText(this.currentFont, this.currentFontSize, _OsShell.promptStr + this.buffer);
+            var lineCount = Math.ceil(bufferSize / _Canvas.width);
             if (lineCount > 1) {
-                this.currentYPosition -= (lineCount-1)*this.consoleLineHeight(); // Subtract 1 because you want to stay on the first line
+                this.currentYPosition -= (lineCount - 1) * this.consoleLineHeight(); // Subtract 1 because you want to stay on the first line
             }
-            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, lineCount*this.consoleLineHeight());
+            _DrawingContext.clearRect(this.currentXPosition, this.currentYPosition - _DefaultFontSize, _Canvas.width, lineCount * this.consoleLineHeight());
             _StdOut.putText(_OsShell.promptStr);
         }
 
         public lineWrappedText(text): string[] {
-            var availableWidth = _Canvas.width-this.currentXPosition; // Calculate remaining space on the current line
+            var availableWidth = _Canvas.width - this.currentXPosition; // Calculate remaining space on the current line
             var buffer = "";
             var lineWrappedText: string[] = [];
             while (text.length > 0) {
@@ -163,7 +167,9 @@ module TSOS {
                     // Move the current X position.
                     var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, line);
                     this.currentXPosition = this.currentXPosition + offset;
-                    if (i+1 < lineWrappedText.length) { this.advanceLine(); }
+                    if (i + 1 < lineWrappedText.length) {
+                        this.advanceLine();
+                    }
                 }
             }
         }
@@ -184,7 +190,7 @@ module TSOS {
                 _DrawingContext.putImageData(screenshot, 0, -scrollYBy);
                 */
                 var screenshot = _DrawingContext.getImageData(0, 0, _Canvas.width, _Canvas.height);
-                _Canvas.height += (this.currentYPosition-_Canvas.height)+_FontHeightMargin;
+                _Canvas.height += (this.currentYPosition - _Canvas.height) + _FontHeightMargin;
                 _DrawingContext.putImageData(screenshot, 0, 0);
                 Control.hostScrollToBottomOfConsole();
             }
@@ -200,5 +206,7 @@ module TSOS {
                 _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) +
                 _FontHeightMargin;
         }
+
     }
+
 }

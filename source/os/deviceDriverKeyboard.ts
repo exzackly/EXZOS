@@ -19,9 +19,6 @@ module TSOS {
         constructor() {
             // Override the base method pointers.
 
-            // The code below cannot run because "this" can only be
-            // accessed after calling super.
-            //super(this.krnKbdDriverEntry, this.krnKbdDispatchKeyPress);
             super();
             this.driverEntry = this.krnKbdDriverEntry;
             this.isr = this.krnKbdDispatchKeyPress;
@@ -30,7 +27,6 @@ module TSOS {
         public krnKbdDriverEntry() {
             // Initialization routine for this, the kernel-mode Keyboard Device Driver.
             this.status = "loaded";
-            // More?
         }
 
         public krnKbdDispatchKeyPress(params) {
@@ -47,17 +43,17 @@ module TSOS {
                 chr = (isShifted || this.isCapsLock) && !(isShifted && this.isCapsLock) ? // What language doesn't have XOR?!?
                     String.fromCharCode(keyCode) : // Uppercase A-Z
                     String.fromCharCode(keyCode + 32); // Lowercase a-z
-            } else if ((keyCode == 32)      ||   // space
-                        (keyCode == 13)     ||   // enter
-				        (keyCode == 8)) {        // backspace
+            } else if ((keyCode == 32) || // space
+                (keyCode == 13) ||        // enter
+                (keyCode == 8)) {         // backspace
                 chr = String.fromCharCode(keyCode);
-            } else if (keyCode in this.keyCodeMap || keyCode in this.shiftedKeyCodeMap) {
+            } else if (keyCode in this.newKeyCodeMap) {
                 chr = this.mapKeyPress(keyCode, isShifted);
             } else if (keyCode == 38) { // up arrow
                 chr = "&uarr;";
             } else if (keyCode == 40) { // down arrow
                 chr = "&darr;";
-            } else if (keyCode == 9) { // tab
+            } else if (keyCode == 9) {  // tab
                 chr = "&tab;";
             } else if (keyCode == 20) { // caps lock pressed
                 this.isCapsLock = !this.isCapsLock;
@@ -65,68 +61,54 @@ module TSOS {
             _KernelInputQueue.enqueue(chr);
         }
 
-        public keyCodeMap = {
-            96 : 48, // 0
-            97 : 49, // 1
-            98 : 50, // 2
-            99 : 51, // 3
-            100: 52, // 4
-            101: 53, // 5
-            102: 54, // 6
-            103: 55, // 7
-            104: 56, // 8
-            105: 57, // 9
-            106: 42, // *
-            107: 43, // +
-            109: 45, // -
-            110: 46, // .
-            111: 47, // /
-            186: 59, // ;
-            187: 61, // =
-            188: 44, // ,
-            189: 45, // -
-            190: 46, // .
-            191: 47, // /
-            192: 96, // `
-            219: 91, // [
-            220: 92, // \
-            221: 93, // ]
-            222: 39  // '
-        };
-
-        public shiftedKeyCodeMap = {
-            48 : 41, // )
-            49 : 33, // !
-            50 : 64, // @
-            51 : 35, // #
-            52 : 36, // $
-            53 : 37, // %
-            54 : 94, // ^
-            55 : 38, // &
-            56 : 42, // *
-            57 : 40, // (
-            186: 58, // :
-            187: 43, // +
-            188: 60, // <
-            189: 95, // _
-            190: 62, // >
-            191: 63, // ?
-            192: 126,// ~
-            219: 123,// {
-            220: 124,// |
-            221: 125,// }
-            222: 34  // "
+        public newKeyCodeMap = {
+            // key: [normal, shifted]
+            48: [48, 41],   // 0 )
+            49: [49, 33],   // 1 !
+            50: [50, 64],   // 2 @
+            51: [51, 35],   // 3 #
+            52: [52, 36],   // 4 $
+            53: [53, 37],   // 5 %
+            54: [54, 94],   // 6 ^
+            55: [55, 38],   // 7 &
+            56: [56, 42],   // 8 *
+            57: [57, 40],   // 9 (
+            96: [48, 48],   // 0 0
+            97: [49, 49],   // 1 1
+            98: [50, 50],   // 2 2
+            99: [51, 51],   // 3 3
+            100: [52, 52],  // 4 4
+            101: [53, 53],  // 5 5
+            102: [54, 54],  // 6 6
+            103: [55, 55],  // 7 7
+            104: [56, 56],  // 8 8
+            105: [57, 57],  // 9 9
+            106: [42, 42],  // * *
+            107: [43, 43],  // + +
+            109: [45, 45],  // - -
+            110: [46, 46],  // . .
+            111: [47, 47],  // / /
+            186: [59, 58],  // ; :
+            187: [61, 43],  // = +
+            188: [44, 60],  // , <
+            189: [45, 95],  // - _
+            190: [46, 62],  // . >
+            191: [47, 63],  // / ?
+            192: [96, 126], // ` ~
+            219: [91, 123], // [ {
+            220: [92, 124], // \ |
+            221: [93, 125], // ] }
+            222: [39, 34]   // ' "
         };
 
         public mapKeyPress(keyCode, isShifted): string {
-             if (!isShifted) { // punctuation characters and symbols
-                 return ((keyCode in this.keyCodeMap) ?
-                     String.fromCharCode(this.keyCodeMap[keyCode]) :
-                     String.fromCharCode(keyCode));
-                } else { // shifted punctuation characters and symbols
-                    return String.fromCharCode(this.shiftedKeyCodeMap[keyCode]);
-                }
+            if (isShifted === false) { // punctuation characters and symbols
+                return String.fromCharCode(this.newKeyCodeMap[keyCode][0]);
+            } else { // shifted punctuation characters and symbols
+                return String.fromCharCode(this.newKeyCodeMap[keyCode][1]);
+            }
         }
+
     }
 
 }

@@ -12,11 +12,6 @@ var TSOS;
             this.preemptable = false;
             this.driverEntry = null;
             this.isr = null;
-            // The constructor below is useless because child classes
-            // cannot pass "this" arguments when calling super().
-            //constructor(public driverEntry = null,
-            //            public isr = null) {
-            //}
         }
     }
     TSOS.DeviceDriver = DeviceDriver;

@@ -54,7 +54,7 @@ module TSOS {
 
             // Highlight op code operand
             for (var i = 0; i < opCode.operandSize; i++) { // Operands are variable length; grab all
-                var opCodeOperandIndex = Mmu.getPhysicalAddress(this.PC+i, this.base);
+                var opCodeOperandIndex = Mmu.getPhysicalAddress(this.PC + i, this.base);
                 Control.hostHighlightMemoryCell(opCodeOperandIndex, 2);
             }
 
@@ -226,7 +226,7 @@ module TSOS {
              */
             var loc = this.getNextAddress(this.PC);
             var value = this.getBytesAtNextAddress(this.PC);
-            Mmu.setByteAtLogicalAddress(loc, value+1, this.base, this.limit);
+            Mmu.setByteAtLogicalAddress(loc, value + 1, this.base, this.limit);
         }
 
         public systemCall(): void {
@@ -238,14 +238,16 @@ module TSOS {
             Should print EXZACKLY
              */
             if (this.Xreg == 0x1) {
-               _KernelInterruptQueue.enqueue(new Interrupt(SYSCALL_IRQ, this.Yreg.toString()));
-           } else if (this.Xreg == 0x2) {
-                var memory = Mmu.getBytesAtLogicalAddress(this.Yreg,MEMORY_SEGMENT_SIZE-this.Yreg-1, this.base, this.limit);
+                _KernelInterruptQueue.enqueue(new Interrupt(SYSCALL_IRQ, this.Yreg.toString()));
+            } else if (this.Xreg == 0x2) {
+                var memory = Mmu.getBytesAtLogicalAddress(this.Yreg, MEMORY_SEGMENT_SIZE - this.Yreg - 1, this.base, this.limit);
                 var output = "";
-                 for (var i = 0; i < memory.length; i++) {
-                     if (memory[i] === 0x0) { break; }
-                     output += String.fromCharCode(memory[i]);
-                 }
+                for (var i = 0; i < memory.length; i++) {
+                    if (memory[i] === 0x0) {
+                        break;
+                    }
+                    output += String.fromCharCode(memory[i]);
+                }
                 _KernelInterruptQueue.enqueue(new Interrupt(SYSCALL_IRQ, output));
             }
         }
@@ -255,7 +257,7 @@ module TSOS {
             // Regarding Kernighan's law: just get it right the first time and you won't ever have to debug
             // If you can't inherently understand this just by looking at it, you really need to ask yourself if you belong here /s
             // Seriously though look up reduce, it can do a lot of cool shit
-            return address.reduce((a,v,i) => a + (v * Math.pow(256, i))); // It's not a magic number, we're working in hex
+            return address.reduce((a, v, i) => a + (v * Math.pow(256, i))); // It's not a magic number, we're working in hex
         }
 
         public getBytesAtNextAddress(location: number): number {
@@ -266,4 +268,5 @@ module TSOS {
         }
 
     }
+
 }

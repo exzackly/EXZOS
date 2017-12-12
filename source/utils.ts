@@ -8,7 +8,7 @@ module TSOS {
 
     export class Utils {
 
-        public static trim(str): string {
+        public static trim(str: string): string {
             // Use a regular expression to remove leading and trailing spaces.
             return str.replace(/^\s+ | \s+$/g, "");
             /*
@@ -19,6 +19,18 @@ module TSOS {
             - "g" makes is global, so we get all the whitespace.
             - "" is nothing, which is what we replace the whitespace with.
             */
+        }
+
+        public static trimProgramArray(arr: number[]): number[] {
+            var firstZero = arr.length - 1; // Assume first 0 at end of array
+            while (firstZero > 0) {
+                if (arr[firstZero - 1] === 0) { // Adjust for each 0 found
+                    firstZero -= 1;
+                } else {
+                    break; // Found program content (non-zero)
+                }
+            }
+            return arr.slice(0, firstZero + 1); // Return portion to first 0
         }
 
         public static rot13(str: string): string {
@@ -48,7 +60,7 @@ module TSOS {
             return ("0".repeat(digits) + num.toString(16).toUpperCase()).slice(-digits);
         }
 
-        public static fromHex(hexString: string) : number {
+        public static fromHex(hexString: string): number {
             return parseInt(hexString, 16);
         }
 

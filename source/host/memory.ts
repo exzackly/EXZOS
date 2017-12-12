@@ -12,13 +12,13 @@ module TSOS {
 
     export class Memory {
 
-        constructor(public bytes: number[] = new Array(MEMORY_SEGMENT_SIZE*MEMORY_SEGMENT_COUNT)) {
+        constructor(public bytes: number[] = new Array(MEMORY_SEGMENT_SIZE * MEMORY_SEGMENT_COUNT)) {
             this.zeroBytes(0, bytes.length);
         }
 
         public setBytes(location: number, bytes: number[]): void {
             for (var i = 0; i < bytes.length; i++) {
-                this.bytes[location+i] = bytes[i];
+                this.bytes[location + i] = bytes[i];
             }
         }
 
@@ -26,14 +26,15 @@ module TSOS {
             if (size < 0) {
                 return [];
             }
-            return this.bytes.slice(location, location+size);
+            return this.bytes.slice(location, location + size);
         }
 
         public zeroBytes(location: number, size: number): void {
-            for (var i = location; i < location+size; i++) {
+            for (var i = location; i < location + size; i++) {
                 this.bytes[i] = 0x0;
             }
         }
 
     }
+
 }

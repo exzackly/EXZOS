@@ -143,9 +143,6 @@ module TSOS {
         constructor() {
             // Override the base method pointers.
 
-            // The code below cannot run because "this" can only be
-            // accessed after calling super.
-            //super(this.krnKbdDriverEntry, this.krnKbdDispatchKeyPress);
             super();
             this.driverEntry = this.krnKbdDriverEntry;
             this.isr = this.krnDiskHandleRequest;
@@ -287,19 +284,20 @@ module TSOS {
 
         public writeProgramToDisk(pid: number, program: number[]): boolean {
             _Kernel.krnTrace(`Roll out PID ${pid}`);
-            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
+            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}.swp`;
             var directoryLocation = this.createOnDisk(filename);
             if (directoryLocation === null) {
                 _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
                 _StdOut.advanceLine();
                 return false;
             }
+            program = Utils.trimProgramArray(program); // Trim off insignificant trailing 0s
             return this.writeToDisk(directoryLocation, program);
         }
 
         public retrieveProgramFromDisk(pid: number): boolean {
             _Kernel.krnTrace(`Roll in PID ${pid}`);
-            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
+            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}.swp`;
             var process = _Scheduler.getProcessForPid(pid);
             var program = this.retrieveFromDisk(filename);
             this.removeProgramFromDisk(pid);
@@ -313,7 +311,7 @@ module TSOS {
         }
 
         public removeProgramFromDisk(pid: number): boolean {
-            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
+            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}.swp`;
             return this.removeFromDisk(filename);
         }
 
@@ -425,7 +423,7 @@ module TSOS {
                 data.setUsed();
                 this.updateMBR(type);
                 return location;
-            } else {
+            } else { // No next location found
                 return null;
             }
         }
@@ -449,7 +447,7 @@ module TSOS {
             };
             var nextLocation = this.iterateDisk(trackLocationStart, trackLocationEnd, action); // Functional programming is cool
             if (nextLocation === null) {
-                nextLocation = DiskLocation.BLANK_LOCATION;
+                nextLocation = DiskLocation.BLANK_LOCATION; // Next location not found; provide default
             }
             var MBRData = new DiskData(DiskLocation.MBR_LOCATION);
             if (type === LocationSearchType.DirectorySearch) {
@@ -491,7 +489,7 @@ module TSOS {
             // Initialize MBR
             var MBRData = new DiskData(DiskLocation.MBR_LOCATION);
             MBRData.setUsed();
-            MBRData.setWritableData([0, 0, 1, 1, 0, 0]);
+            MBRData.setWritableData([0, 0, 1, 1, 0, 0].concat(Utils.toHexArray(` ${APP_AUTHOR}`)));
         }
 
         public getDirectoryFiles(type: LSType): any[] {

@@ -31,7 +31,7 @@ module TSOS {
             _Console = new Console();          // The command line interface / console I/O device.
 
             // Initialize standard input and output to the _Console.
-            _StdIn  = _Console;
+            _StdIn = _Console;
             _StdOut = _Console;
 
             // Load the Keyboard Device Driver
@@ -45,10 +45,6 @@ module TSOS {
             _krnDiskDriver = new DeviceDriverDisk();        // Construct it.
             _krnDiskDriver.driverEntry();                   // Call the driverEntry() initialization routine.
             this.krnTrace(`Disk device driver ${_krnDiskDriver.status}`);
-
-            //
-            // ... more?
-            //
 
             // Enable the OS Interrupts.  (Not the CPU clock interrupt, as that is done in the hardware sim.)
             this.krnTrace("Enabling the interrupts");
@@ -74,13 +70,8 @@ module TSOS {
             // ... Disable the Interrupts.
             this.krnTrace("Disabling the interrupts");
             this.krnDisableInterrupts();
-            //
-            // Unload the Device Drivers?
-            // More?
-            //
             this.krnTrace("End shutdown OS");
         }
-
 
         public krnOnCPUClockPulse() {
             /* This gets called from the host hardware simulation every time there is a hardware clock pulse.
@@ -99,7 +90,6 @@ module TSOS {
                 this.krnTrace("Idle");
             }
         }
-
 
         //
         // Interrupt Handling
@@ -120,14 +110,10 @@ module TSOS {
             // This is the Interrupt Handler Routine.  See pages 8 and 560.
             // Trace our entrance here so we can compute Interrupt Latency by analyzing the log file later on. Page 766.
             this.krnTrace("Handling IRQ~" + irq);
-
             // Invoke the requested Interrupt Service Routine via Switch/Case rather than an Interrupt Vector.
             // Note: There is no need to "dismiss" or acknowledge the interrupts in our design here.
             //       Maybe the hardware simulation will grow to support/require that in the future.
             switch (irq) {
-                case TIMER_IRQ:
-                    this.krnTimerISR();              // Kernel built-in routine for timers (not the clock).
-                    break;
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params);   // Kernel mode device driver
                     _StdIn.handleInput();
@@ -172,33 +158,12 @@ module TSOS {
             }
         }
 
-        public krnTimerISR() {
-            // The built-in TIMER (not clock) Interrupt Service Routine (as opposed to an ISR coming from a device driver). {
-            // Check multiprogramming parameters and enforce quanta here. Call the scheduler / context switch here if necessary.
-        }
-
-        //
-        // System Calls... that generate software interrupts via tha Application Programming Interface library routines.
-        //
-        // Some ideas:
-        // - ReadConsole
-        // - WriteConsole
-        // - CreateProcess
-        // - ExitProcess
-        // - WaitForProcessToExit
-        // - CreateFile
-        // - OpenFile
-        // - ReadFile
-        // - WriteFile
-        // - CloseFile
-
-
         //
         // OS Utility Routines
         //
         public krnTrace(msg: string) {
-             // Check globals to see if trace is set ON.  If so, then (maybe) log the message.
-             if (_Trace) {
+            // Check globals to see if trace is set ON.  If so, then (maybe) log the message.
+            if (_Trace) {
                 if (msg === "Idle") {
                     // We can't log every idle clock pulse because it would lag the browser very quickly.
                     if (_OSclock % 10 == 0) {
@@ -209,7 +174,7 @@ module TSOS {
                 } else {
                     Control.hostLog(msg, "OS");
                 }
-             }
+            }
         }
 
         public krnTrapError(msg) {
@@ -217,5 +182,7 @@ module TSOS {
             Control.hostDisplayBSOD();
             this.krnShutdown();
         }
+
     }
+
 }

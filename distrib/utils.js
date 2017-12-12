@@ -18,6 +18,18 @@ var TSOS;
             - "" is nothing, which is what we replace the whitespace with.
             */
         }
+        static trimProgramArray(arr) {
+            var firstZero = arr.length - 1; // Assume first 0 at end of array
+            while (firstZero > 0) {
+                if (arr[firstZero - 1] === 0) {
+                    firstZero -= 1;
+                }
+                else {
+                    break; // Found program content (non-zero)
+                }
+            }
+            return arr.slice(0, firstZero + 1); // Return portion to first 0
+        }
         static rot13(str) {
             /*
                This is an easy-to understand implementation of the famous and common Rot13 obfuscator.

@@ -128,7 +128,7 @@ module TSOS {
         }
 
         public static descent(font, size) {
-            return 7.0*size/25.0;
+            return 7.0 * size / 25.0;
         }
 
         public static measure(font, size, str) {
@@ -169,32 +169,42 @@ module TSOS {
                         continue;
                     }
                     if (penUp) {
-                        ctx.moveTo( x + a[0]*mag, y - a[1]*mag);
+                        ctx.moveTo(x + a[0] * mag, y - a[1] * mag);
                         penUp = false;
                     } else {
-                        ctx.lineTo( x + a[0]*mag, y - a[1]*mag);
+                        ctx.lineTo(x + a[0] * mag, y - a[1] * mag);
                     }
                 }
                 ctx.stroke();
-                x += c.width*mag;
+                x += c.width * mag;
             }
             ctx.restore();
             return total;
         }
 
         public static enable(ctx) {
-            ctx.drawText = function(font,size,x,y,text) { return CanvasTextFunctions.draw( ctx, font,size,x,y,text); };
-            ctx.measureText = function(font,size,text) { return CanvasTextFunctions.measure( font,size,text); };
-            ctx.fontAscent = function(font,size) { return CanvasTextFunctions.ascent(font,size); };
-            ctx.fontDescent = function(font,size) { return CanvasTextFunctions.descent(font,size); };
-            ctx.drawTextRight = function(font,size,x,y,text) {
-                var w = CanvasTextFunctions.measure(font,size,text);
-                return CanvasTextFunctions.draw( ctx, font,size,x-w,y,text);
+            ctx.drawText = function (font, size, x, y, text) {
+                return CanvasTextFunctions.draw(ctx, font, size, x, y, text);
             };
-            ctx.drawTextCenter = function(font,size,x,y,text) {
-                var w = CanvasTextFunctions.measure(font,size,text);
-                return CanvasTextFunctions.draw( ctx, font,size,x-w/2,y,text);
+            ctx.measureText = function (font, size, text) {
+                return CanvasTextFunctions.measure(font, size, text);
+            };
+            ctx.fontAscent = function (font, size) {
+                return CanvasTextFunctions.ascent(font, size);
+            };
+            ctx.fontDescent = function (font, size) {
+                return CanvasTextFunctions.descent(font, size);
+            };
+            ctx.drawTextRight = function (font, size, x, y, text) {
+                var w = CanvasTextFunctions.measure(font, size, text);
+                return CanvasTextFunctions.draw(ctx, font, size, x - w, y, text);
+            };
+            ctx.drawTextCenter = function (font, size, x, y, text) {
+                var w = CanvasTextFunctions.measure(font, size, text);
+                return CanvasTextFunctions.draw(ctx, font, size, x - w / 2, y, text);
             };
         }
+
     }
+
 }

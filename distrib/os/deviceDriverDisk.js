@@ -106,9 +106,6 @@ var TSOS;
     class DeviceDriverDisk extends TSOS.DeviceDriver {
         constructor() {
             // Override the base method pointers.
-            // The code below cannot run because "this" can only be
-            // accessed after calling super.
-            //super(this.krnKbdDriverEntry, this.krnKbdDispatchKeyPress);
             super();
             this.driverEntry = this.krnKbdDriverEntry;
             this.isr = this.krnDiskHandleRequest;
@@ -250,18 +247,19 @@ var TSOS;
         }
         writeProgramToDisk(pid, program) {
             _Kernel.krnTrace(`Roll out PID ${pid}`);
-            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
+            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}.swp`;
             var directoryLocation = this.createOnDisk(filename);
             if (directoryLocation === null) {
                 _StdOut.putText("Insufficient memory. Please clear up memory before loading new process.");
                 _StdOut.advanceLine();
                 return false;
             }
+            program = TSOS.Utils.trimProgramArray(program); // Trim off insignificant trailing 0s
             return this.writeToDisk(directoryLocation, program);
         }
         retrieveProgramFromDisk(pid) {
             _Kernel.krnTrace(`Roll in PID ${pid}`);
-            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
+            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}.swp`;
             var process = _Scheduler.getProcessForPid(pid);
             var program = this.retrieveFromDisk(filename);
             this.removeProgramFromDisk(pid);
@@ -274,7 +272,7 @@ var TSOS;
             return true;
         }
         removeProgramFromDisk(pid) {
-            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}`;
+            var filename = `${DeviceDriverDisk.DEVICE_DRIVER_DISK_PROGRAM_PREFIX}${pid}.swp`;
             return this.removeFromDisk(filename);
         }
         createOnDisk(filename) {
@@ -405,7 +403,7 @@ var TSOS;
             };
             var nextLocation = this.iterateDisk(trackLocationStart, trackLocationEnd, action); // Functional programming is cool
             if (nextLocation === null) {
-                nextLocation = TSOS.DiskLocation.BLANK_LOCATION;
+                nextLocation = TSOS.DiskLocation.BLANK_LOCATION; // Next location not found; provide default
             }
             var MBRData = new DiskData(TSOS.DiskLocation.MBR_LOCATION);
             if (type === LocationSearchType.DirectorySearch) {
@@ -446,7 +444,7 @@ var TSOS;
             // Initialize MBR
             var MBRData = new DiskData(TSOS.DiskLocation.MBR_LOCATION);
             MBRData.setUsed();
-            MBRData.setWritableData([0, 0, 1, 1, 0, 0]);
+            MBRData.setWritableData([0, 0, 1, 1, 0, 0].concat(TSOS.Utils.toHexArray(` ${APP_AUTHOR}`)));
         }
         getDirectoryFiles(type) {
             var files = [];

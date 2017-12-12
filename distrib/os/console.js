@@ -79,16 +79,16 @@ var TSOS;
                 this.commandHistoryIndex += 1;
             }
             else {
-                return;
-            } // past bounds; return before erasing screen
+                return; // past bounds; return before erasing screen
+            }
             this.clearBuffer();
             this.buffer = this.commandHistory[this.commandHistoryIndex];
             this.putText(this.buffer);
         }
         tabCompleteCommand(prefix) {
             if (prefix.length === 0) {
-                return;
-            } // Do not autocomplete if buffer empty
+                return; // Do not autocomplete if buffer empty
+            }
             var commands = Object.keys(_OsShell.commandMap);
             var commandsWithPrefix = commands.filter(cmd => cmd.startsWith(prefix));
             if (commandsWithPrefix.length == 1) {

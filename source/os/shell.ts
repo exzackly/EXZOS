@@ -14,6 +14,7 @@
    ------------ */
 
 module TSOS {
+
     export class Shell {
 
         constructor(public promptStr = ">") {

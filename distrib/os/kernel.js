@@ -38,9 +38,6 @@ var TSOS;
             _krnDiskDriver = new TSOS.DeviceDriverDisk(); // Construct it.
             _krnDiskDriver.driverEntry(); // Call the driverEntry() initialization routine.
             this.krnTrace(`Disk device driver ${_krnDiskDriver.status}`);
-            //
-            // ... more?
-            //
             // Enable the OS Interrupts.  (Not the CPU clock interrupt, as that is done in the hardware sim.)
             this.krnTrace("Enabling the interrupts");
             this.krnEnableInterrupts();
@@ -62,10 +59,6 @@ var TSOS;
             // ... Disable the Interrupts.
             this.krnTrace("Disabling the interrupts");
             this.krnDisableInterrupts();
-            //
-            // Unload the Device Drivers?
-            // More?
-            //
             this.krnTrace("End shutdown OS");
         }
         krnOnCPUClockPulse() {
@@ -107,9 +100,6 @@ var TSOS;
             // Note: There is no need to "dismiss" or acknowledge the interrupts in our design here.
             //       Maybe the hardware simulation will grow to support/require that in the future.
             switch (irq) {
-                case TIMER_IRQ:
-                    this.krnTimerISR(); // Kernel built-in routine for timers (not the clock).
-                    break;
                 case KEYBOARD_IRQ:
                     _krnKeyboardDriver.isr(params); // Kernel mode device driver
                     _StdIn.handleInput();
@@ -153,24 +143,6 @@ var TSOS;
                     this.krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");
             }
         }
-        krnTimerISR() {
-            // The built-in TIMER (not clock) Interrupt Service Routine (as opposed to an ISR coming from a device driver). {
-            // Check multiprogramming parameters and enforce quanta here. Call the scheduler / context switch here if necessary.
-        }
-        //
-        // System Calls... that generate software interrupts via tha Application Programming Interface library routines.
-        //
-        // Some ideas:
-        // - ReadConsole
-        // - WriteConsole
-        // - CreateProcess
-        // - ExitProcess
-        // - WaitForProcessToExit
-        // - CreateFile
-        // - OpenFile
-        // - ReadFile
-        // - WriteFile
-        // - CloseFile
         //
         // OS Utility Routines
         //

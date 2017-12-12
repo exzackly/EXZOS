@@ -22,7 +22,7 @@ module TSOS {
         public static isValidMemoryAccess(logicalAddress: number, size: number, base: number, limit: number): boolean {
             if ((logicalAddress < 0x0) || // Before first addressable address
                 (logicalAddress >= limit) || // Past last addressable address
-                (logicalAddress+size > limit)) { // Past last addressable address
+                (logicalAddress + size > limit)) { // Past last addressable address
                 // Memory access violation found; throw shit fit
                 _KernelInterruptQueue.enqueue(new Interrupt(MEMORY_ACCESS_VIOLATION_IRQ, _CPU.pid));
                 return false;
@@ -31,15 +31,17 @@ module TSOS {
         }
 
         public static getPhysicalAddress(logicalAddress: number, base: number): number {
-            return base+logicalAddress;
+            return base + logicalAddress;
         }
 
         public static setByteAtLogicalAddress(logicalAddress: number, byte: number, base: number, limit: number): void {
-            Mmu.setBytesAtLogicalAddress(logicalAddress,[byte], base, limit);
+            Mmu.setBytesAtLogicalAddress(logicalAddress, [byte], base, limit);
         }
 
         public static setBytesAtLogicalAddress(logicalAddress: number, bytes: number[], base: number, limit: number): void {
-            if (Mmu.isValidMemoryAccess(logicalAddress, bytes.length, base, limit) === false) { return; }
+            if (Mmu.isValidMemoryAccess(logicalAddress, bytes.length, base, limit) === false) {
+                return;
+            }
             _Memory.setBytes(Mmu.getPhysicalAddress(logicalAddress, base), bytes);
         }
 
@@ -48,7 +50,9 @@ module TSOS {
         }
 
         public static getBytesAtLogicalAddress(logicalAddress: number, size: number, base: number, limit: number): number[] {
-            if (Mmu.isValidMemoryAccess(logicalAddress, size, base, limit) === false) { return [0]; }
+            if (Mmu.isValidMemoryAccess(logicalAddress, size, base, limit) === false) {
+                return [0];
+            }
             return _Memory.getBytes(Mmu.getPhysicalAddress(logicalAddress, base), size);
         }
 
@@ -62,7 +66,7 @@ module TSOS {
                     _Scheduler.terminateProcess(Mmu.segmentStatus[i]);
                 }
             }
-            _Memory.zeroBytes(0, MEMORY_SEGMENT_SIZE*MEMORY_SEGMENT_COUNT);
+            _Memory.zeroBytes(0, MEMORY_SEGMENT_SIZE * MEMORY_SEGMENT_COUNT);
         }
 
         public static createNewProcess(priority: number, program: string[]): number {
@@ -111,14 +115,14 @@ module TSOS {
             for (var i = 0; i < Mmu.segmentStatus.length; i++) {
                 if (Mmu.segmentStatus[i] === -1) {
                     Mmu.segmentStatus[i] = pid;
-                    return i*MEMORY_SEGMENT_SIZE;
+                    return i * MEMORY_SEGMENT_SIZE;
                 }
             }
             return -1; // Empty segment not found
         }
 
         public static clearSegmentForProcess(pcb: Pcb): void {
-            var segment = Math.floor(pcb.base/MEMORY_SEGMENT_SIZE);
+            var segment = Math.floor(pcb.base / MEMORY_SEGMENT_SIZE);
             Mmu.segmentStatus[segment] = -1; // Mark segment as free
             pcb.base = -1;
             pcb.limit = -1;
@@ -134,4 +138,5 @@ module TSOS {
         }
 
     }
+
 }

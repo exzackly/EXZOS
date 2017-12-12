@@ -11,20 +11,19 @@
 //
 // Global CONSTANTS (TypeScript 1.5 introduced const. Very cool.)
 //
-const APP_NAME: string    = "EXZOS";   // Pronounce it "exhaust", it's much cooler that way
+const APP_NAME: string = "EXZOS";   // Pronounce it "exhaust", it's much cooler that way
+const APP_AUTHOR: string = "EXZACKLY";
 const APP_VERSION: string = "0.07";   // What did you expect?
 
 const CPU_CLOCK_INTERVAL: number = 100;   // This is in ms (milliseconds) so 1000 = 1 second.
 
-const TIMER_IRQ: number = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
-                              // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
-const KEYBOARD_IRQ: number = 1;
-const DISK_IRQ: number = 2;
-const SYSCALL_IRQ: number = 3;
-const CONTEXT_SWITCH_IRQ: number = 4;
-const TERMINATE_PROGRAM_IRQ: number = 5;
-const INVALID_OPCODE_IRQ: number = 6;
-const MEMORY_ACCESS_VIOLATION_IRQ: number = 7;
+const KEYBOARD_IRQ: number = 0;
+const DISK_IRQ: number = 1;
+const SYSCALL_IRQ: number = 2;
+const CONTEXT_SWITCH_IRQ: number = 3;
+const TERMINATE_PROGRAM_IRQ: number = 4;
+const INVALID_OPCODE_IRQ: number = 5;
+const MEMORY_ACCESS_VIOLATION_IRQ: number = 6;
 
 const MEMORY_SEGMENT_COUNT: number = 3;
 const MEMORY_SEGMENT_SIZE: number = 256;
@@ -34,9 +33,13 @@ const DISK_SECTOR_COUNT: number = 8;
 const DISK_BLOCK_COUNT: number = 8;
 const DISK_BLOCK_SIZE: number = 64;
 const DISK_BLOCK_RESERVED_SIZE: number = 4; // 4 bytes reserved per block [used, next track, next sector, next block, ...data...]
-const DISK_BLOCK_WRITABLE_SIZE: number = DISK_BLOCK_SIZE-DISK_BLOCK_RESERVED_SIZE;
+const DISK_BLOCK_WRITABLE_SIZE: number = DISK_BLOCK_SIZE - DISK_BLOCK_RESERVED_SIZE;
 
-const HIGHLIGHT_MAP: { [type: number]: string; } = {1: "operandHighlight", 2: "operatorHighlight", 3: "memoryAccessHighlight"};
+const HIGHLIGHT_MAP: { [type: number]: string; } = {
+    1: "operandHighlight",
+    2: "operatorHighlight",
+    3: "memoryAccessHighlight"
+};
 
 //
 // Global Variables
@@ -86,6 +89,6 @@ var _hardwareClockID: number = null;
 var Glados: any = null;  // This is the function Glados() in glados.js on Labouseur.com.
 var _GLaDOS: any = null; // If the above is linked in, this is the instantiated instance of Glados.
 
-var onDocumentLoad = function() {
+var onDocumentLoad = function () {
     TSOS.Control.hostInit();
 };

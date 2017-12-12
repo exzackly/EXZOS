@@ -9,7 +9,9 @@
    ------------ */
 
 module TSOS {
+
     export class Queue {
+
         constructor(public q = new Array()) {
         }
 
@@ -17,7 +19,7 @@ module TSOS {
             return this.q.length;
         }
 
-        public isEmpty(){
+        public isEmpty() {
             return (this.q.length == 0);
         }
 
@@ -48,5 +50,7 @@ module TSOS {
             }
             return retVal;
         }
+
     }
+
 }

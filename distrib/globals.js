@@ -11,17 +11,16 @@
 // Global CONSTANTS (TypeScript 1.5 introduced const. Very cool.)
 //
 const APP_NAME = "EXZOS"; // Pronounce it "exhaust", it's much cooler that way
+const APP_AUTHOR = "EXZACKLY";
 const APP_VERSION = "0.07"; // What did you expect?
 const CPU_CLOCK_INTERVAL = 100; // This is in ms (milliseconds) so 1000 = 1 second.
-const TIMER_IRQ = 0; // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
-// NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
-const KEYBOARD_IRQ = 1;
-const DISK_IRQ = 2;
-const SYSCALL_IRQ = 3;
-const CONTEXT_SWITCH_IRQ = 4;
-const TERMINATE_PROGRAM_IRQ = 5;
-const INVALID_OPCODE_IRQ = 6;
-const MEMORY_ACCESS_VIOLATION_IRQ = 7;
+const KEYBOARD_IRQ = 0;
+const DISK_IRQ = 1;
+const SYSCALL_IRQ = 2;
+const CONTEXT_SWITCH_IRQ = 3;
+const TERMINATE_PROGRAM_IRQ = 4;
+const INVALID_OPCODE_IRQ = 5;
+const MEMORY_ACCESS_VIOLATION_IRQ = 6;
 const MEMORY_SEGMENT_COUNT = 3;
 const MEMORY_SEGMENT_SIZE = 256;
 const DISK_TRACK_COUNT = 4;
@@ -30,7 +29,11 @@ const DISK_BLOCK_COUNT = 8;
 const DISK_BLOCK_SIZE = 64;
 const DISK_BLOCK_RESERVED_SIZE = 4; // 4 bytes reserved per block [used, next track, next sector, next block, ...data...]
 const DISK_BLOCK_WRITABLE_SIZE = DISK_BLOCK_SIZE - DISK_BLOCK_RESERVED_SIZE;
-const HIGHLIGHT_MAP = { 1: "operandHighlight", 2: "operatorHighlight", 3: "memoryAccessHighlight" };
+const HIGHLIGHT_MAP = {
+    1: "operandHighlight",
+    2: "operatorHighlight",
+    3: "memoryAccessHighlight"
+};
 //
 // Global Variables
 //

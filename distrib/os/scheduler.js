@@ -105,7 +105,7 @@ var TSOS;
             if (!this.readyQueue.isEmpty()) {
                 var process = this.getProcessForPid(this.readyQueue.peek()); // Get process for first element in ready queue
                 if (process.base == -1 || process.limit == -1) {
-                    if (_CPU.isExecuting === true && this.readyQueue.getSize() > MEMORY_SEGMENT_COUNT) {
+                    if (_CPU.pid !== -1 && this.readyQueue.getSize() > MEMORY_SEGMENT_COUNT) {
                         var lastPIDInReadyQueue = this.readyQueue.q[this.readyQueue.getSize() - 1]; // Roll out last process in ready queue
                         TSOS.Mmu.rollOutProcessToDisk(lastPIDInReadyQueue);
                     }
@@ -118,11 +118,11 @@ var TSOS;
         }
         runAll() {
             if (this.residentList.length === 0) {
-                return -1;
-            } // Return value -1 indicates nothing to run
+                return -1; // Return value -1 indicates nothing to run
+            }
             else if (!this.readyQueue.isEmpty()) {
-                return -2;
-            } // Return value -2 indicates processes already running
+                return -2; // Return value -2 indicates processes already running
+            }
             for (var i = 0; i < this.residentList.length; i++) {
                 this.readyQueue.enqueue(this.residentList[i].pid);
             }
