@@ -126,7 +126,7 @@ var TSOS;
         }
         static hostUpdateDisplayCPU() {
             var IR = _CPU.IR === -1 ? "00" : TSOS.Utils.toHex(_CPU.IR);
-            var mnemonic = _CPU.IR === -1 ? "00" : _CPU.opCodeMap[_CPU.IR].mnemonic;
+            var mnemonic = _CPU.IR === -1 || _CPU.opCodeMap[_CPU.IR] === undefined ? "00" : _CPU.opCodeMap[_CPU.IR].mnemonic;
             var CPUElement = document.getElementById("displayCPU");
             var CPUData = "<table style='table-layout:fixed; width: 100%; text-align: center;'>" +
                 "<tbody><tr><th>PC</th><th>ACC</th><th>IR</th><th>MNE</th><th>X</th><th>Y</th><th>Z</th></tr>" +
@@ -244,30 +244,34 @@ var TSOS;
         // Host Events
         //
         static hostBtnStartOS_click(btn) {
-            // Disable the (passed-in) start button...
-            btn.disabled = true;
-            // .. enable the Halt, Reset, and Toggle Single Step Mode buttons ...
-            document.getElementById("btnHaltOS").disabled = false;
-            document.getElementById("btnReset").disabled = false;
-            document.getElementById("btnToggleSingleStepMode").disabled = false;
-            // .. set focus on the OS console display ...
-            document.getElementById("display").focus();
-            // ... Create and initialize the CPU (because it's part of the hardware)  ...
-            _CPU = new TSOS.Cpu(); // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
-            // ... Create Memory ...
-            _Memory = new TSOS.Memory();
-            // ... Create Disk ...
-            _Disk = new TSOS.Disk();
-            // ... Create Scheduler ...
-            _Scheduler = new TSOS.Scheduler();
-            // ... Create displays ...
-            Control.hostCreateMemoryTable();
-            Control.hostCreateDiskTable();
-            // ... then set the host clock pulse ...
-            _hardwareClockID = setInterval(TSOS.Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
-            // .. and call the OS Kernel Bootstrap routine.
-            _Kernel = new TSOS.Kernel();
-            _Kernel.krnBootstrap(); // _GLaDOS.afterStartup() will get called in there, if configured.
+            if (btn.value === "Start") {
+                btn.value = "SW keyboard"; // Repurpose button to show mobile keyboard
+                // .. enable the Halt, Reset, and Toggle Single Step Mode buttons ...
+                document.getElementById("btnHaltOS").disabled = false;
+                document.getElementById("btnReset").disabled = false;
+                document.getElementById("btnToggleSingleStepMode").disabled = false;
+                // .. set focus on the OS console display ...
+                document.getElementById("display").focus();
+                // ... Create and initialize the CPU (because it's part of the hardware)  ...
+                _CPU = new TSOS.Cpu(); // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
+                // ... Create Memory ...
+                _Memory = new TSOS.Memory();
+                // ... Create Disk ...
+                _Disk = new TSOS.Disk();
+                // ... Create Scheduler ...
+                _Scheduler = new TSOS.Scheduler();
+                // ... Create displays ...
+                Control.hostCreateMemoryTable();
+                Control.hostCreateDiskTable();
+                // ... then set the host clock pulse ...
+                _hardwareClockID = setInterval(TSOS.Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
+                // .. and call the OS Kernel Bootstrap routine.
+                _Kernel = new TSOS.Kernel();
+                _Kernel.krnBootstrap(); // _GLaDOS.afterStartup() will get called in there, if configured.
+            }
+            else {
+                document.getElementById("mobile").focus(); // Show mobile keyboard
+            }
         }
         static hostBtnHaltOS_click(btn) {
             Control.hostLog("Emergency halt", "host");

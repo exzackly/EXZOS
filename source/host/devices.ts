@@ -57,7 +57,7 @@ module TSOS {
         public static hostOnKeypress(event): void {
             // The canvas element CAN receive focus if you give it a tab index, which we have.
             // Check that we are processing keystrokes only from the canvas's id (as set in index.html).
-            if (event.target.id === "display") {
+            if (event.target.id === "display" || event.target.id === "mobile") {
                 event.preventDefault();
                 // Note the pressed key code in the params (Mozilla-specific).
                 var params = [event.which, event.shiftKey, event.ctrlKey];

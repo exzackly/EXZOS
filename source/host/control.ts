@@ -146,7 +146,7 @@ module TSOS {
 
         public static hostUpdateDisplayCPU(): void {
             var IR = _CPU.IR === -1 ? "00" : Utils.toHex(_CPU.IR);
-            var mnemonic = _CPU.IR === -1 ? "00" : _CPU.opCodeMap[_CPU.IR].mnemonic;
+            var mnemonic = _CPU.IR === -1 ||_CPU.opCodeMap[_CPU.IR] === undefined ? "00" : _CPU.opCodeMap[_CPU.IR].mnemonic;
             var CPUElement = <HTMLInputElement> document.getElementById("displayCPU");
             var CPUData = "<table style='table-layout:fixed; width: 100%; text-align: center;'>" +
                 "<tbody><tr><th>PC</th><th>ACC</th><th>IR</th><th>MNE</th><th>X</th><th>Y</th><th>Z</th></tr>" +
@@ -272,38 +272,41 @@ module TSOS {
         // Host Events
         //
         public static hostBtnStartOS_click(btn): void {
-            // Disable the (passed-in) start button...
-            btn.disabled = true;
+            if (btn.value === "Start") { // Check if we are starting OS or showing mobile keyboard
+                btn.value = "SW keyboard"; // Repurpose button to show mobile keyboard
 
-            // .. enable the Halt, Reset, and Toggle Single Step Mode buttons ...
-            (<HTMLButtonElement>document.getElementById("btnHaltOS")).disabled = false;
-            (<HTMLButtonElement>document.getElementById("btnReset")).disabled = false;
-            (<HTMLButtonElement>document.getElementById("btnToggleSingleStepMode")).disabled = false;
+                // .. enable the Halt, Reset, and Toggle Single Step Mode buttons ...
+                (<HTMLButtonElement>document.getElementById("btnHaltOS")).disabled = false;
+                (<HTMLButtonElement>document.getElementById("btnReset")).disabled = false;
+                (<HTMLButtonElement>document.getElementById("btnToggleSingleStepMode")).disabled = false;
 
-            // .. set focus on the OS console display ...
-            document.getElementById("display").focus();
+                // .. set focus on the OS console display ...
+                document.getElementById("display").focus();
 
-            // ... Create and initialize the CPU (because it's part of the hardware)  ...
-            _CPU = new Cpu();  // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
+                // ... Create and initialize the CPU (because it's part of the hardware)  ...
+                _CPU = new Cpu();  // Note: We could simulate multi-core systems by instantiating more than one instance of the CPU here.
 
-            // ... Create Memory ...
-            _Memory = new Memory();
+                // ... Create Memory ...
+                _Memory = new Memory();
 
-            // ... Create Disk ...
-            _Disk = new Disk();
+                // ... Create Disk ...
+                _Disk = new Disk();
 
-            // ... Create Scheduler ...
-            _Scheduler = new Scheduler();
+                // ... Create Scheduler ...
+                _Scheduler = new Scheduler();
 
-            // ... Create displays ...
-            Control.hostCreateMemoryTable();
-            Control.hostCreateDiskTable();
+                // ... Create displays ...
+                Control.hostCreateMemoryTable();
+                Control.hostCreateDiskTable();
 
-            // ... then set the host clock pulse ...
-            _hardwareClockID = setInterval(Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
-            // .. and call the OS Kernel Bootstrap routine.
-            _Kernel = new Kernel();
-            _Kernel.krnBootstrap();  // _GLaDOS.afterStartup() will get called in there, if configured.
+                // ... then set the host clock pulse ...
+                _hardwareClockID = setInterval(Devices.hostClockPulse, CPU_CLOCK_INTERVAL);
+                // .. and call the OS Kernel Bootstrap routine.
+                _Kernel = new Kernel();
+                _Kernel.krnBootstrap();  // _GLaDOS.afterStartup() will get called in there, if configured.
+            } else {
+                document.getElementById("mobile").focus(); // Show mobile keyboard
+            }
         }
 
         public static hostBtnHaltOS_click(btn): void {

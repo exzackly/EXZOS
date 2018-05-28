@@ -39,7 +39,7 @@ var TSOS;
                 0xEA: { operandSize: 0, mnemonic: "NOP", fn: this.noOperation },
                 0x00: { operandSize: 0, mnemonic: "BRK", fn: this.brk },
                 0xEC: { operandSize: 2, mnemonic: "CPX", fn: this.compareMemoryWithXReg },
-                0xD0: { operandSize: 1, mnemonic: "BNE", fn: this.branchIfNotEqual },
+                0xD0: { operandSize: 0, mnemonic: "BNE", fn: this.branchIfNotEqual },
                 0xEE: { operandSize: 2, mnemonic: "INC", fn: this.incrementByte },
                 0xFF: { operandSize: 0, mnemonic: "SYS", fn: this.systemCall } // System Call
             };
@@ -187,7 +187,10 @@ var TSOS;
             Acc should be 00
              */
             if (this.Zflag === 0) {
-                this.PC = (this.PC + TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit)) % MEMORY_SEGMENT_SIZE;
+                this.PC = (this.PC + TSOS.Mmu.getByteAtLogicalAddress(this.PC, this.base, this.limit) + 1) % MEMORY_SEGMENT_SIZE; // Operand size must be added here
+            }
+            else {
+                this.PC += 1; // Operand size must be added here
             }
         }
         incrementByte() {
